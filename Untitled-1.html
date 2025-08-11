@@ -2108,10 +2108,93 @@
             }
         }
 
+        // ------------------------------
+        // 裏ボス #3：Bahamut（蒼炎と終焉の龍帝）
+        // ------------------------------
+        class Bahamut extends Boss {
+            constructor(g) {
+                super(g, 'Bahamut — 蒼炎と終焉の龍帝');
+                this.maxHp = 600; this.hp = this.maxHp;
+                this.color1 = CSS('--c-water');
+                this.color2 = CSS('--c-th');
+                this.movePattern = 'curve';
+                this.tMove = 0; this.usedMega = false;
+            }
+            upd(dt) {
+                super.upd(dt);
+                this.tMove += dt;
+                if (this.tMove > 3) {
+                    this.tMove = 0;
+                    const arr = ['curve', 'zig', 'dive'];
+                    this.movePattern = arr[randi(0, arr.length)];
+                }
+                switch (this.movePattern) {
+                    case 'curve':
+                        this.x = 480 + Math.cos(this.g.t * 0.6) * 240;
+                        this.y = 160 + Math.sin(this.g.t * 0.8) * 60;
+                        break;
+                    case 'zig':
+                        this.x = 480 + Math.sin(this.g.t * 3) * 260;
+                        this.y = 160 + Math.sin(this.g.t * 1.6) * 80;
+                        break;
+                    case 'dive':
+                        const p = this.g.player;
+                        this.x = lerp(this.x, p.x, 0.06);
+                        this.y = lerp(this.y, 100, 0.04);
+                        break;
+                }
+                if (this.tAttack > 1.7) {
+                    this.tAttack = 0;
+                    [this.flareBurst, this.lightningDive, this.dragonBreath][randi(0, 3)].call(this);
+                }
+                if (this.hp < this.maxHp * 0.5 && !this.usedMega) {
+                    this.usedMega = true;
+                    this.megaFlare();
+                }
+            }
+            flareBurst() {
+                const n = 24; const spread = TAU / 8;
+                for (let i = 0; i < n; i++) {
+                    const a = -Math.PI / 2 + (i - (n - 1) / 2) * (spread / n);
+                    this.g.add(new Projectile(this.g, this.x, this.y, {
+                        vx: Math.cos(a) * 6.2,
+                        vy: Math.sin(a) * 6.2,
+                        r: 6,
+                        col: CSS('--c-water'),
+                        hostile: true,
+                        damage: 2.2,
+                        trail: true
+                    }));
+                }
+            }
+            lightningDive() {
+                const px = this.g.player.x;
+                this.g.tele.rect(px - 20, 0, 40, this.g.h, CSS('--c-th-2'), 600);
+                setTimeout(() => {
+                    this.g.add(new Laser(this.g, px, 0, 40, this.g.h, CSS('--c-th'), 40, true));
+                }, 620);
+            }
+            dragonBreath() {
+                const l = new Laser(this.g, this.x, this.y, 30, this.g.h, CSS('--c-fire'), 60, true);
+                this.g.add(l);
+            }
+            megaFlare() {
+                this.g.callout('メガフレア', '#ffffff');
+                this.g.tele.ring(this.x, this.y, 120, '#ffffff', 1000);
+                setTimeout(() => {
+                    for (let i = 0; i < 6; i++) {
+                        const a = i * TAU / 6;
+                        const x = this.x + Math.cos(a) * 20;
+                        this.g.add(new Laser(this.g, x, this.y, 14, this.g.h, CSS('--c-fire-2'), 60, true));
+                    }
+                }, 1000);
+            }
+        }
+
         // -------- シークレットキャンペーン構築＆ボタン配線 --------
         (function secretCampaign() {
             if (window.game) {
-                game.secret.push(Pierrot, FallenHero);
+                game.secret.push(Pierrot, FallenHero, Bahamut);
                 const btn = document.getElementById('btnSecret');
                 if (btn) {
                     btn.addEventListener('click', () => game.startSecret());
@@ -2124,7 +2207,7 @@
             } else {
                 window.addEventListener('load', () => {
                     if (window.game) {
-                        game.secret.push(Pierrot, FallenHero);
+                        game.secret.push(Pierrot, FallenHero, Bahamut);
                         const btn = document.getElementById('btnSecret');
                         if (btn) {
                             btn.addEventListener('click', () => game.startSecret());
@@ -2556,6 +2639,7 @@
                     ['Cosmos', 'Cosmos（原初）'],
                     ['Pierrot', 'Pierrot（道化／裏）'],
                     ['FallenHero', 'Fallen Hero（朽ちた勇者／裏）'],
+                    ['Bahamut', 'Bahamut（蒼炎龍帝／裏）'],
                     // 追加ボスがあればここに ['ClassName','表示名'] を追記
                 ];
                 known.forEach(([n, label]) => {
@@ -2834,7 +2918,7 @@
             // _thunder() を差し替え
             SkillManager.prototype._thunder = function () {
                 const lvl = this.list.thunder.lvl;
-                const dur = 3 + 0; // ベース10秒（Lvで伸ばしたいなら +lvl*? で）
+                const dur = 3 + lvl * 0.5; // 基本3秒＋Lv毎に0.5秒延長
                 this.g.timeStop(dur);
                 // ちょっとした演出
                 if (!this.g.lowPerf) {
@@ -3497,9 +3581,11 @@
                 // すでに入っていないなら追加（重複防止）
                 const has = game.secret.some(C => C === window.Satan || (C && C.name === 'Satan'));
                 if (!has) {
-                    // Fallen Hero の直後に差し込む（見つからなければ末尾）
+                    // Bahamut がいればその後、次に Fallen Hero の後へ
+                    const idxBH = game.secret.findIndex(C => C && C.name === 'Bahamut');
                     const idxFH = game.secret.findIndex(C => C && (C.name === 'FallenHero' || C.name === 'Fallen_Hero'));
-                    if (idxFH >= 0) game.secret.splice(idxFH + 1, 0, window.Satan);
+                    if (idxBH >= 0) game.secret.splice(idxBH + 1, 0, window.Satan);
+                    else if (idxFH >= 0) game.secret.splice(idxFH + 1, 0, window.Satan);
                     else game.secret.push(window.Satan);
                 }
 
