@@ -1,0 +1,3634 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ELEMENTALS: Complete Ultra — (Part1/3 + Part2/3 + Part3/3 連結で完成)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        :root {
+            --bg: #0a0c1a;
+            --arena: #101230;
+            --line: #e6ebff;
+            --ink: #e6e9ff;
+            --dim: #9aa3c1;
+            --hp: #25ff9f;
+            --warn: #ffd34d;
+            --danger: #ff4966;
+            --ready: #c0d3ff;
+
+            --c-fire: #ff5a3c;
+            --c-fire-2: #ff9a47;
+            --c-water: #4aa3ff;
+            --c-water-2: #a9d3ff;
+            --c-wind: #6affc1;
+            --c-wind-2: #b6ffe6;
+            --c-earth: #a4664b;
+            --c-earth-2: #e4b394;
+            --c-th: #f6ff52;
+            --c-th-2: #fffaa3;
+            --c-light: #ffffff;
+            --c-light-2: #fffbd6;
+            --c-dark: #7b4cff;
+            --c-dark-2: #b39aff;
+            --c-atom: #ff4cff;
+            --c-atom-2: #ff98ff;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: radial-gradient(1200px 800px at 50% -160px, #1b204b, var(--bg));
+            color: #fff;
+            font-family: "Noto Sans JP", system-ui, sans-serif;
+            overflow: hidden
+        }
+
+        .game {
+            width: 960px;
+            height: 640px;
+            margin: auto;
+            border: 6px solid var(--line);
+            background: var(--arena);
+            position: relative
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%
+        }
+
+        .hud {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+
+        .boss-hud {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            text-align: center;
+            font-family: "Orbitron", sans-serif
+        }
+
+        .boss-name {
+            font-weight: 900;
+            letter-spacing: .5px;
+            text-shadow: 0 2px 0 rgba(0, 0, 0, .6)
+        }
+
+        .boss-bar {
+            width: 600px;
+            height: 14px;
+            margin: 6px auto;
+            background: #23254b;
+            border: 2px solid var(--line);
+            position: relative;
+            overflow: hidden
+        }
+
+        .boss-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(90deg, #ff5a3c, #ff9a47);
+            transition: width .25s ease
+        }
+
+        .boss-bar .seg {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-right: 1px solid rgba(255, 255, 255, .15)
+        }
+
+        .boss-bar .seg:nth-child(2) {
+            left: 20%
+        }
+
+        .boss-bar .seg:nth-child(3) {
+            left: 40%
+        }
+
+        .boss-bar .seg:nth-child(4) {
+            left: 60%
+        }
+
+        .boss-bar .seg:nth-child(5) {
+            left: 80%
+        }
+
+        .hp-hud {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .hp-wrap {
+            flex: 1;
+            height: 18px;
+            background: #20244c;
+            border: 2px solid var(--line);
+            position: relative
+        }
+
+        .hp-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, var(--hp), #b6ffd9);
+            width: 100%
+        }
+
+        .hp-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            text-shadow: 0 1px 0 #000
+        }
+
+        .hp-wrap.low .hp-fill {
+            animation: hpblink 1.1s infinite
+        }
+
+        @keyframes hpblink {
+
+            0%,
+            100% {
+                filter: brightness(1)
+            }
+
+            50% {
+                filter: brightness(1.6)
+            }
+        }
+
+        .skills {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 80px;
+            display: flex;
+            gap: 8px;
+            justify-content: space-between
+        }
+
+        .slot {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, #171a3b, #0e1030);
+            border: 3px solid #3a3e74;
+            border-radius: 12px;
+            position: relative;
+            pointer-events: auto;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(255, 255, 255, .12)
+        }
+
+        .slot.ready {
+            box-shadow: 0 0 18px var(--ready)
+        }
+
+        .slot .label {
+            position: absolute;
+            left: 6px;
+            top: 6px;
+            font-size: 10px;
+            opacity: .85
+        }
+
+        .slot .key {
+            position: absolute;
+            right: 6px;
+            top: 6px;
+            font-family: "Orbitron";
+            font-size: 11px;
+            opacity: .7
+        }
+
+        .slot .icon {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            text-align: center
+        }
+
+        .cd-ring {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center
+        }
+
+        .cd-ring svg {
+            width: 100%;
+            height: 100%
+        }
+
+        .cd-num {
+            position: absolute;
+            font-family: "Orbitron";
+            font-size: 14px;
+            font-weight: 900
+        }
+
+        .access {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px
+        }
+
+        .toggle {
+            pointer-events: auto;
+            font-size: 12px;
+            background: #0e1030;
+            border: 2px solid var(--line);
+            padding: 6px 10px;
+            cursor: pointer
+        }
+
+        .menu {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, .85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            z-index: 200
+        }
+
+        .menu.show {
+            display: flex
+        }
+
+        .title {
+            font-family: "Orbitron";
+            font-size: 46px;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--c-fire), var(--c-water), var(--c-th));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: grad 4s infinite alternate
+        }
+
+        .btn {
+            pointer-events: auto;
+            background: #0e1030;
+            color: #e5e7ff;
+            border: 3px solid var(--line);
+            padding: 14px 28px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            cursor: pointer
+        }
+
+        .btn:hover {
+            transform: translateY(-2px)
+        }
+
+        @keyframes grad {
+            to {
+                background-position: 100% 100%
+            }
+        }
+
+        .tele {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game" id="game">
+        <canvas id="cv" width="960" height="640" aria-label="game canvas"></canvas>
+
+        <div class="hud">
+            <div class="boss-hud">
+                <div class="boss-name" id="bossName"></div>
+                <div class="boss-bar">
+                    <div class="boss-fill" id="bossHP"></div>
+                    <div class="seg"></div>
+                    <div class="seg"></div>
+                    <div class="seg"></div>
+                    <div class="seg"></div>
+                </div>
+            </div>
+
+            <div class="hp-hud">
+                <div class="hp-wrap" id="hpWrap">
+                    <div class="hp-fill" id="hpFill"></div>
+                    <div class="hp-text" id="hpText">20 / 20</div>
+                </div>
+                <div class="toggle" id="toggleColor">色覚補助: OFF</div>
+                <div class="toggle" id="togglePerf">軽量描画: OFF</div>
+            </div>
+
+            <div class="skills" id="skillBar"></div>
+        </div>
+
+        <div class="menu show" id="menu">
+            <div class="title">ELEMENTALS — COMPLETE ULTRA</div>
+            <div style="opacity:.8">8属性×守護者5体→原初撃破で裏2体解禁（各10手＋連携）</div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="btn" id="btnStart">戦いを始める</button>
+                <button class="btn" id="btnSecret" style="display:none">???（裏）</button>
+            </div>
+            <div style="opacity:.6;font-size:12px;margin-top:10px">Move: Arrow / WASD ｜ Cast: 1-8 / Click ｜ Dodge
+                everything!</div>
+        </div>
+
+        <div class="tele" id="tele"></div>
+    </div>
+
+    <script>
+        'use strict';
+
+        // =========================
+        //  Utilities / Math Helpers
+        // =========================
+        const TAU = Math.PI * 2;
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const rand = (a, b) => a + Math.random() * (b - a);
+        const randi = (a, b) => Math.floor(rand(a, b));
+        const dist = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1);
+        const CSS = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+        // =========================
+        //  Tiny Sound (WebAudio)
+        // =========================
+        class Sound {
+            constructor() { this.enabled = true; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.master = this.ctx.createGain(); this.master.gain.value = .13; this.master.connect(this.ctx.destination); } catch (e) { this.enabled = false; } }
+            ensure() { if (!this.enabled) return; if (this.ctx.state === 'suspended') { this.ctx.resume().catch(() => { }); } }
+            osc(freq = 440, dur = .08, type = 'sine', gain = .15) { if (!this.enabled) return; const t = this.ctx.currentTime; const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.setValueAtTime(freq, t); o.type = type; g.gain.value = gain; g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur); }
+            hit() { this.osc(260, .06, 'triangle', .22) }
+            cast() { this.osc(520, .05, 'sine', .12) }
+            hurt() { this.osc(180, .12, 'sawtooth', .25) }
+            bossDown() { this.osc(120, .5, 'square', .3) }
+        }
+
+        // =========================
+        //  Telegraph (DOM overlay)
+        // =========================
+        class Telegraph {
+            constructor(root, game) { this.root = root; this.game = game; }
+            ring(x, y, r, color = '#fff', ms = 600) {
+                const aid = this.game?.colorAid;
+                const border = aid ? `4px dashed ${color}` : `2px dashed ${color}`;
+                const bg = aid ? `background-image: radial-gradient(${color}33 2px, transparent 2px);background-size:10px 10px;` : ``;
+                const el = document.createElement('div');
+                el.style.cssText = `position:absolute;left:${x - r}px;top:${y - r}px;width:${r * 2}px;height:${r * 2}px;border:${border};border-radius:50%;opacity:.85;box-shadow:0 0 12px ${color};${bg}`;
+                this.root.appendChild(el);
+                setTimeout(() => el.remove(), ms);
+            }
+            rect(x, y, w, h, color = '#fff', ms = 600) {
+                const aid = this.game?.colorAid;
+                const border = aid ? `4px dashed ${color}` : `2px dashed ${color}`;
+                const bg = aid ? `background-image: repeating-linear-gradient(45deg, ${color}22 0 8px, transparent 8px 16px);` : ``;
+                const el = document.createElement('div');
+                el.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;border:${border};opacity:.80;${bg}`;
+                this.root.appendChild(el);
+                setTimeout(() => el.remove(), ms);
+            }
+        }
+
+        // =========================
+        //  Particles / VFX (Pool)
+        // =========================
+        class Particle {
+            constructor() { this.alive = false; }
+            init(x, y, col, life = 30, size = 2, vx = 0, vy = 0) { this.x = x; this.y = y; this.col = col; this.life = life; this.max = life; this.size = size; this.vx = vx; this.vy = vy; this.alive = true; }
+            upd() { if (!this.alive) return; this.x += this.vx; this.y += this.vy; this.life--; if (this.life <= 0) this.alive = false; }
+            draw(ctx) { if (!this.alive) return; ctx.save(); ctx.globalAlpha = this.life / this.max; ctx.fillStyle = this.col; ctx.shadowColor = this.col; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, TAU); ctx.fill(); ctx.restore(); }
+        }
+        class VFX {
+            constructor(max = 1600) { this.pool = Array.from({ length: max }, () => new Particle()); }
+            spawn(x, y, col, life = 30, size = 2, vx = 0, vy = 0) {
+                for (const p of this.pool) { if (!p.alive) { p.init(x, y, col, life, size, vx, vy); return p; } }
+                this.pool[0].init(x, y, col, life, size, vx, vy); return this.pool[0];
+            }
+            burst(x, y, col, n = 16, life = 30, spd = 3) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU; this.spawn(x, y, col, life, 2, Math.cos(a) * spd, Math.sin(a) * spd) } }
+            upd() { for (const p of this.pool) p.upd(); }
+            draw(ctx) { for (const p of this.pool) p.draw(ctx); }
+        }
+
+        // =========================
+        //  Input
+        // =========================
+        class Input {
+            constructor(canvas) {
+                this.k = {}; this.mx = 0; this.my = 0; this.md = false; this.canvas = canvas;
+                window.addEventListener('keydown', e => { this.k[e.key] = true; });
+                window.addEventListener('keyup', e => { this.k[e.key] = false; });
+                window.addEventListener('mousemove', e => { const r = this.canvas.getBoundingClientRect(); this.mx = (e.clientX - r.left) * this.canvas.width / r.width; this.my = (e.clientY - r.top) * this.canvas.height / r.height; });
+                window.addEventListener('mousedown', () => this.md = true); window.addEventListener('mouseup', () => this.md = false);
+            }
+            pressed(k) { return !!this.k[k]; }
+        }
+
+        // =========================
+        //  Base Entities
+        // =========================
+        class Entity { constructor(g, x, y) { this.g = g; this.x = x; this.y = y; this.dead = false; } upd(dt) { } draw(ctx) { } }
+        class Projectile extends Entity {
+            constructor(g, x, y, opt = {}) {
+                super(g, x, y);
+                this.vx = opt.vx || 0; this.vy = opt.vy || 0; this.r = opt.r || 6; this.col = opt.col || '#fff';
+                this.trail = !!opt.trail; this.gravity = opt.gravity || 0; this.spin = opt.spin || 0; this.rot = 0;
+                this.life = opt.life || 240; this.hostile = !!opt.hostile; this.damage = opt.damage || 1;
+                this.playerSkill = !!opt.playerSkill; this.pierce = opt.pierce || 0; this.shape = opt.shape || 'circle';
+                this.w = opt.w || this.r; this.h = opt.h || this.r;
+                if (opt.shadow === false) { this._noShadow = true; }
+            }
+            upd(dt) {
+                this.x += this.vx; this.y += this.vy; this.vy += this.gravity; if (this.spin) this.rot += this.spin;
+                if (this.trail && (this.g.t % 2 === 0) && !this.g.lowPerf) this.g.vfx.spawn(this.x, this.y, this.col, 16, 2, 0, 0);
+                this.life--; if (this.life <= 0 || this.x < -40 || this.x > this.g.w + 40 || this.y < -40 || this.y > this.g.h + 40) this.dead = true;
+            }
+            draw(ctx) {
+                ctx.save(); ctx.translate(this.x, this.y); if (this.rot) ctx.rotate(this.rot); ctx.fillStyle = this.col; if (!this._noShadow) { ctx.shadowColor = this.col; ctx.shadowBlur = 10; }
+                if (this.shape === 'rect') { ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h); } else { ctx.beginPath(); ctx.arc(0, 0, this.r, 0, TAU); ctx.fill(); }
+                ctx.restore();
+            }
+        }
+        class Laser extends Entity {
+            constructor(g, x, y, w = 8, h = 200, col = '#fff', life = 30, hostile = true) { super(g, x, y); this.w = w; this.h = h; this.col = col; this.life = life; this.hostile = hostile; this.playerSkill = !hostile; this.damage = 2; }
+            upd() { this.life--; if (this.life <= 0) this.dead = true; }
+            draw(ctx) { ctx.save(); ctx.fillStyle = this.col; ctx.shadowColor = this.col; ctx.shadowBlur = 20; ctx.fillRect(this.x - this.w / 2, this.y, this.w, this.h); ctx.restore(); }
+        }
+        class Area extends Entity {
+            constructor(g, x, y, opt = {}) {
+                super(g, x, y);
+                this.r = opt.r || 10; this.maxR = opt.maxR || 80; this.col = opt.col || 'rgba(255,255,255,.5)'; this.core = opt.core || '#fff';
+                this.life = opt.life || 60; this.hostile = !!opt.hostile; this.playerSkill = !!opt.playerSkill; this.damage = opt.damage || 5; this.expand = opt.expand !== false;
+            }
+            upd(dt) { if (this.expand) this.r = lerp(this.r, this.maxR, .2); this.life--; if (this.life <= 0) this.dead = true; }
+            draw(ctx) { ctx.save(); ctx.fillStyle = this.col; ctx.shadowColor = this.core; ctx.shadowBlur = 30; ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, TAU); ctx.fill(); ctx.fillStyle = this.core; ctx.beginPath(); ctx.arc(this.x, this.y, this.r * 0.25, 0, TAU); ctx.fill(); ctx.restore(); }
+        }
+
+        // =========================
+        //  Player / Skills / Augments
+        // =========================
+        const SKILL_META = [
+            { id: 'fire', name: '火炎', col: 'var(--c-fire)', key: '1' },
+            { id: 'water', name: '氷結', col: 'var(--c-water)', key: '2' },
+            { id: 'wind', name: '疾風', col: 'var(--c-wind)', key: '3' },
+            { id: 'earth', name: '大地', col: 'var(--c-earth)', key: '4' },
+            { id: 'thunder', name: '雷鳴', col: 'var(--c-th)', key: '5' },
+            { id: 'light', name: '聖光', col: 'var(--c-light)', key: '6' },
+            { id: 'dark', name: '暗黒', col: 'var(--c-dark)', key: '7' },
+            { id: 'atom', name: '原子', col: 'var(--c-atom)', key: '8' },
+        ];
+
+        function labelOf(id) { return SKILL_META.find(s => s.id === id)?.name || id }
+
+        class SkillManager {
+            constructor(g, owner) { this.g = g; this.o = owner; this.list = {}; this.ui = document.getElementById('skillBar'); this.rings = {}; this._buildUI(); }
+            reset() { for (const k in this.list) { this.list[k].cd = 0; this.list[k].lvl = 0; } }
+            _buildUI() {
+                this.ui.innerHTML = '';
+                SKILL_META.forEach(meta => {
+                    const slot = document.createElement('div'); slot.className = 'slot'; slot.dataset.skill = meta.id;
+                    slot.innerHTML = `<div class="label">${meta.name}</div><div class="key">${meta.key}</div><div class="icon"></div><div class="cd-ring"></div>`;
+                    this.ui.appendChild(slot);
+                    const ring = slot.querySelector('.cd-ring');
+                    ring.innerHTML = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" stroke="#2b2f64" stroke-width="8" fill="none"/><circle cx="50" cy="50" r="46" stroke="${CSS('--line')}" stroke-width="8" fill="none" stroke-dasharray="${2 * Math.PI * 46}" stroke-dashoffset="0"/></svg><div class="cd-num"></div>`;
+                    this.rings[meta.id] = ring.querySelector('circle:nth-of-type(2)');
+                    slot.addEventListener('click', () => { this.cast(meta.id); this.g.sound.ensure(); });
+                    this.list[meta.id] = this._default(meta.id);
+                    const icon = slot.querySelector('.icon'); icon.style.color = `var(${meta.col})`; icon.textContent = meta.id.toUpperCase();
+                });
+                window.addEventListener('keydown', e => {
+                    const m = { '1': 'fire', '2': 'water', '3': 'wind', '4': 'earth', '5': 'thunder', '6': 'light', '7': 'dark', '8': 'atom' };
+                    if (m[e.key]) { this.cast(m[e.key]); this.g.sound.ensure(); }
+                });
+            }
+            _default(id) {
+                switch (id) {
+                    case 'fire': return { id, cd: 0, max: 0, lvl: 0 };
+                    case 'water': return { id, cd: 0, max: 6.0, lvl: 0 };
+                    case 'wind': return { id, cd: 0, max: 8.0, lvl: 0 };
+                    case 'earth': return { id, cd: 0, max: 12.0, lvl: 0 };
+                    case 'thunder': return { id, cd: 20, max: 20, lvl: 0 };
+                    case 'light': return { id, cd: 5, max: 8.0, lvl: 0 };
+                    case 'dark': return { id, cd: 10, max: 8.0, lvl: 0 };
+                    case 'atom': return { id, cd: 25, max: 25.0, lvl: 0 };
+                }
+            }
+            tick(dt) { for (const k in this.list) { const s = this.list[k]; if (s.cd > 0) { s.cd -= dt; if (s.cd < 0) s.cd = 0; this._drawRing(s); } } }
+            _drawRing(s) {
+                const pct = s.cd / s.max; const circ = 2 * Math.PI * 46; const ring = this.rings[s.id]; if (ring) ring.style.strokeDashoffset = String(circ * pct);
+                const slot = this.ui.querySelector(`[data-skill="${s.id}"]`); const num = slot.querySelector('.cd-num'); if (num) num.textContent = s.cd > 0 ? Math.ceil(s.cd) : ''; if (slot) slot.classList.toggle('ready', s.cd <= 0);
+            }
+            cast(id) {
+                const s = this.list[id]; if (!s || s.cd > 0 || this.g.state !== 'play') return; s.cd = s.max; this._drawRing(s); this.g.sound.cast();
+                switch (id) {
+                    case 'fire': this._fire(); break;
+                    case 'water': this._water(); break;
+                    case 'wind': this._wind(); break;
+                    case 'earth': this._earth(); break;
+                    case 'thunder': this._thunder(); break;
+                    case 'light': this._light(); break;
+                    case 'dark': this._dark(); break;
+                    case 'atom': this._atom(); break;
+                }
+            }
+            // ---- skills ----
+            _fire() { // Scorch Volley
+                const lvl = this.list.fire.lvl;
+                const n = 3 + lvl; const spread = TAU / 10 + lvl * 0.06; const dmgBase = 0.5; const dotChance = .25 + lvl * 0.1; const dotDmg = .5 + lvl * 0.5;
+                for (let i = 0; i < n; i++) {
+                    setTimeout(() => {
+                        const a = -Math.PI / 2 + (i - (n - 1) / 2) * spread;
+                        const sp = 5.6;
+                        const p = new Projectile(this.g, this.o.x, this.o.y - 16, { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 7, col: CSS('--c-fire'), trail: true, life: 140, playerSkill: true, damage: dmgBase });
+                        p.onHit = (t) => { if (Math.random() < dotChance) t.applyDot('burn', dotDmg, 120, CSS('--c-fire-2')); };
+                        this.g.add(p);
+                    }, i * 70);
+                }
+            }
+            _water() { // Glacial Lance
+                const lvl = this.list.water.lvl; const sp = 9 + lvl * 1.5; const pier = 1 + lvl; const freeze = 60 + lvl * 30;
+                const p = new Projectile(this.g, this.o.x, this.o.y - 20, { vx: 0, vy: -sp, r: 10, col: CSS('--c-water'), trail: true, life: 180, playerSkill: true, damage: 10 });
+                p.pierce = pier;
+                this.g.add(p);
+            }
+            _wind() { // Slicing Fan
+                const lvl = this.list.wind.lvl; const blades = 5 + lvl * 2; const spread = TAU / 6 + lvl * 0.08; const sp = 7.4;
+                for (let i = 0; i < blades; i++) { const a = -Math.PI / 2 + (i - (blades - 1) / 2) * spread; this.g.add(new Projectile(this.g, this.o.x, this.o.y - 14, { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 5, col: CSS('--c-wind'), playerSkill: true, damage: 12 })); }
+            }
+            _earth() { // Tectonic Spike
+                const lvl = this.list.earth.lvl; const count = 1 + lvl; const boss = this.g.boss; if (!boss) return;
+                for (let i = 0; i < count; i++) { setTimeout(() => { this.g.add(new Area(this.g, boss.x + rand(-30, 30), boss.y + 20, { r: 4, maxR: 70 + lvl * 10, col: 'rgba(164,102,75,.35)', core: CSS('--c-earth-2'), life: 28, playerSkill: true, damage: 15 + 1.5 * lvl })); if (!this.g.lowPerf) this.g.vfx.burst(boss.x, boss.y + 20, CSS('--c-earth-2'), 10, 18, 2); }, i * 120); }
+            }
+            _thunder() { // Chain Pillar
+                const lvl = this.list.thunder.lvl; const dur = 24 + lvl * 10; const chain = 1 + lvl; let bx = this.g.boss ? this.g.boss.x : this.o.x;
+                for (let i = 0; i < chain; i++) { setTimeout(() => { this.g.add(new Laser(this.g, bx, 0, 20, this.g.h, CSS('--c-th'), dur, true)); if (!this.g.lowPerf) this.g.vfx.burst(bx, 120, '#fff889', 18, 20, 2); }, i * 120); bx = rand(80, this.g.w - 80); }
+            }
+            _light() { // Radiant Mend
+                const lvl = this.list.light.lvl; const heal = 5 * (1 + lvl); const inv = 0.8 + 0.2 * lvl;
+                this.o.heal(heal); this.o.ifr = Math.max(this.o.ifr, inv); if (lvl >= 2) this.o.autoLight = true;
+                if (!this.g.lowPerf) for (let i = 0; i < 24; i++) { this.g.vfx.spawn(this.o.x + rand(-36, 36), this.o.y + rand(-36, 36), CSS('--c-light-2'), 40, 2, 0, -0.6); }
+            }
+            _dark() { // Void Orb
+                const lvl = this.list.dark.lvl;
+                const orb = new Area(this.g, this.o.x, this.o.y - 30, { r: 12, maxR: 90 + lvl * 20, col: 'rgba(123,76,255,.25)', core: CSS('--c-dark-2'), life: 90 + lvl * 15, playerSkill: true, damage: 0.6 + lvl * 0.3 });
+                orb.expand = false; orb.pull = 0.25 + 0.15 * lvl;
+                orb.upd = (dt) => { this.g.entitiesPull(orb.x, orb.y, orb.pull, true); Area.prototype.upd.call(orb, dt); };
+                this.g.add(orb);
+            }
+            _atom() { // Singularity
+                const lvl = this.list.atom.lvl; const r = 80 + lvl * 20; const dmg = 6 + lvl * 2; const pull = 0.45 + lvl * 0.25;
+                const s = new Area(this.g, this.o.x, this.o.y - 40, { r: 10, maxR: r, col: 'rgba(255,76,255,.5)', core: '#ffffff', life: 60, playerSkill: true, damage: dmg });
+                s.upd = (dt) => { this.g.entitiesPull(s.x, s.y, pull, false); Area.prototype.upd.call(s, dt); };
+                this.g.add(s);
+            }
+        }
+
+        class Player extends Entity {
+            constructor(g) { super(g, g.w / 2, g.h * 0.78); this.r = 12; this.spd = 260; this.maxHp = 80, this.hp = this.maxHp; this.ifr = 0; this.autoLight = false; this.combo = 1; this.comboTimer = 0; this.skills = new SkillManager(g, this); }
+            reset() { this.x = this.g.w / 2; this.y = this.g.h * 0.78; this.hp = this.maxHp; this.ifr = 0; this.autoLight = false; this.combo = 1; this.comboTimer = 0; this.skills.reset(); }
+            take(dmg) { if (this.ifr > 0) return; this.hp -= dmg; this.ifr = 0; this.g.sound.hurt(); this.g.vfx.burst(this.x, this.y, '#ff4966', this.g.lowPerf ? 8 : 18, 24, 3); if (this.hp <= 0) this.g.defeat(); }
+            heal(n) { this.hp = clamp(this.hp + n, 0, this.maxHp); }
+            upd(dt) {
+                const k = this.g.input; let vx = 0, vy = 0;
+                if (k.pressed('ArrowLeft') || k.pressed('a')) vx -= 1;
+                if (k.pressed('ArrowRight') || k.pressed('d')) vx += 1;
+                if (k.pressed('ArrowUp') || k.pressed('w')) vy -= 1;
+                if (k.pressed('ArrowDown') || k.pressed('s')) vy += 1;
+                const len = Math.hypot(vx, vy) || 1;
+                this.x = clamp(this.x + vx / len * this.spd * dt, 16, this.g.w - 16);
+                this.y = clamp(this.y + vy / len * this.spd * dt, 16, this.g.h - 16);
+                if (this.ifr > 0) this.ifr -= dt;
+
+                if (this.autoLight && this.hp <= Math.ceil(this.maxHp * 0.35) && !this._autoUsed) {
+                    this._autoUsed = true; this.skills.cast('light'); setTimeout(() => this._autoUsed = false, 1200);
+                }
+
+                if (this.combo > 1) { this.comboTimer -= dt; if (this.comboTimer <= 0) { this.combo = Math.max(1, (this.combo - 0.1)); this.comboTimer = 0.6; } }
+            }
+            draw(ctx) {
+                ctx.save();
+                if (this.ifr > 0 && Math.sin(this.g.t * 18) > 0) ctx.globalAlpha = .5;
+                ctx.fillStyle = '#ff3b4e'; ctx.shadowColor = '#ff7a84'; ctx.shadowBlur = 16;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y + this.r * 0.3);
+                ctx.bezierCurveTo(this.x + this.r * 0.6, this.y - this.r * 0.4, this.x + this.r * 1.1, this.y, this.x, this.y + this.r * 0.9);
+                ctx.bezierCurveTo(this.x - this.r * 1.1, this.y, this.x - this.r * 0.6, this.y - this.r * 0.4, this.x, this.y + this.r * 0.3);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // =========================
+        //  Boss Framework (Base)
+        // =========================
+        class Boss extends Entity {
+            constructor(g, name) { super(g, g.w / 2, 140); this.name = name; this.r = 46; this.maxHp = 220; this.hp = this.maxHp; this.phase = 0; this.tAttack = 0; this.tMove = 0; this.status = { burn: 0, freeze: 0, shock: 0, bleed: 0 }; this.dot = []; this.color1 = '#fff'; this.color2 = '#fff2a8'; }
+            reset() { this.hp = this.maxHp; this.phase = 0; this.tAttack = 0; this.tMove = 0; this.status = { burn: 0, freeze: 0, shock: 0, bleed: 0 }; this.dot = []; this.x = this.g.w / 2; this.y = 140; }
+            take(d) { this.hp -= d * this.g.player.combo; if (!this.g.lowPerf) this.g.vfx.burst(this.x, this.y, '#ffffff', 8, 14, 1.6); this.g.player.combo = clamp(this.g.player.combo + 0.05, 1, 3); this.g.player.comboTimer = 0.8; if (this.hp <= 0) { this.hp = 0; this.dead = true; this.g.sound.bossDown(); for (let i = 0; i < (this.g.lowPerf ? 20 : 40); i++) this.g.vfx.spawn(this.x + rand(-30, 30), this.y + rand(-30, 30), '#fff', 60, 2, rand(-3, 3), rand(-3, 3)); this.onDefeat && this.onDefeat(); } }
+            applyStatus(type, frames, color) { if (this.status[type] === undefined) return; this.status[type] = Math.max(this.status[type], frames); if (!this.g.lowPerf) this.g.tele.ring(this.x, this.y, 60, color, 300); }
+            applyDot(type, perTick, frames, color) { this.applyStatus(type, frames, color); this.dot.push({ type, perTick, frames }); }
+            upd(dt) {
+                const freezeFactor = this.status.freeze > 0 ? 0.55 : 1;
+                this.tAttack += dt * freezeFactor; this.tMove += dt * freezeFactor;
+                for (let i = this.dot.length - 1; i >= 0; i--) { const d = this.dot[i]; d.frames--; if (d.frames % 20 === 0) { this.take(d.perTick); if (!this.g.lowPerf) this.g.vfx.spawn(this.x + rand(-8, 8), this.y + rand(-8, 8), CSS('--c-fire-2'), 16, 2, 0, -.4); } if (d.frames <= 0) this.dot.splice(i, 1); }
+                if (this.status.freeze > 0) this.status.freeze--;
+                if (this.status.burn > 0) this.status.burn--;
+                if (this.status.shock > 0) this.status.shock--;
+                if (this.status.bleed > 0) this.status.bleed--;
+            }
+            draw(ctx) {
+                ctx.save();
+                // aura rings
+                ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.r + 20, 0, TAU); ctx.fill();
+                // core
+                const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r);
+                grd.addColorStop(0, '#ffffff'); grd.addColorStop(.6, this.color1); grd.addColorStop(1, '#000');
+                ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, TAU); ctx.fill();
+                // orbitals
+                for (let i = 0; i < 6; i++) { const a = this.g.t * 0.9 + i * TAU / 6; ctx.fillStyle = this.color2; ctx.shadowColor = this.color2; ctx.shadowBlur = 18; ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * (this.r + 34), this.y + Math.sin(a) * (this.r + 34), 6, 0, TAU); ctx.fill(); }
+                ctx.restore();
+            }
+        }
+
+        // =========================
+        //  Elemental Bosses (前半)
+        // =========================
+        class Ignis extends Boss {
+            constructor(g) { super(g, 'Ignis — 灼熱の守護者'); this.maxHp = 240; this.hp = this.maxHp; this.color1 = CSS('--c-fire'); this.color2 = CSS('--c-fire-2'); }
+            upd(dt) {
+                super.upd(dt); this.x = 480 + Math.sin(this.g.t * 0.9) * 220; this.y = 140 + Math.cos(this.g.t * 0.6) * 32;
+                if (this.tAttack > 1.6) { this.tAttack = 0; const choose = randi(0, 3); if (this.phase === 0) { [this.ringBurst, this.meteorRain, this.flameTiles][choose].call(this); } else { [this.meteorRain, this.flameTiles, this.coreExplode][choose].call(this); } }
+                if (this.hp < this.maxHp * 0.5) this.phase = 1;
+            }
+            ringBurst() { const n = 20; for (let i = 0; i < n; i++) { const a = i * TAU / n; this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 3.6, vy: Math.sin(a) * 3.6, r: 7, col: CSS('--c-fire'), trail: true, life: 220, hostile: true, damage: 2 })); } }
+            meteorRain() { for (let i = 0; i < 12; i++) { setTimeout(() => { this.g.add(new Projectile(this.g, rand(40, this.g.w - 40), -20, { vx: rand(-.3, .3), vy: rand(4.5, 6.5), r: 18, col: CSS('--c-fire-2'), trail: true, gravity: 0.02, hostile: true, damage: 2 })); }, i * 120); } }
+            flameTiles() { const cols = 8; const tileW = this.g.w / cols; const col = randi(0, cols); this.g.tele.rect(col * tileW, this.g.h - 180, tileW, 180, CSS('--c-fire-2'), 700); setTimeout(() => { for (let i = 0; i < 20; i++) { this.g.add(new Projectile(this.g, col * tileW + rand(0, tileW), this.g.h - 190, { vx: rand(-.3, .3), vy: -rand(2, 4), r: 6, col: CSS('--c-fire'), hostile: true, life: 90 })); } }, 700); }
+            coreExplode() { this.g.tele.ring(this.x, this.y, 120, CSS('--c-fire-2'), 600); setTimeout(() => { this.g.add(new Area(this.g, this.x, this.y, { r: 10, maxR: 140, col: 'rgba(255,90,60,.35)', core: CSS('--c-fire-2'), life: 36, hostile: true, damage: 4 })); }, 620) }
+        }
+
+        class Aqua extends Boss {
+            constructor(g) { super(g, 'Aqua — 氷海の守護者'); this.maxHp = 260; this.hp = this.maxHp; this.color1 = CSS('--c-water'); this.color2 = CSS('--c-water-2'); }
+            upd(dt) {
+                super.upd(dt); this.x = 480 + Math.cos(this.g.t * 0.7) * 180; this.y = 140 + Math.sin(this.g.t * 0.5) * 42;
+                if (this.tAttack > 1.8) { this.tAttack = 0;[this.tripleShard, this.waveRows, this.freezeField, this.snowBurst][randi(0, 4)].call(this); }
+                if (this.hp < this.maxHp * 0.5) this.phase = 1;
+            }
+            tripleShard() { const p = this.g.player; const base = Math.atan2(p.y - this.y, p.x - this.x); for (let i = -1; i <= 1; i++) { const a = base + i * 0.25; this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 4.6, vy: Math.sin(a) * 4.6, r: 7, col: CSS('--c-water'), hostile: true, damage: 1.6, trail: true })); } }
+            waveRows() { for (let i = 0; i < 12; i++) { setTimeout(() => { this.g.add(new Projectile(this.g, i * (this.g.w / 12) + 20, this.g.h + 20, { vx: 0, vy: -5.6, r: 9, col: CSS('--c-water-2'), hostile: true, damage: 1.4 })); }, i * 60); } }
+            freezeField() { const x = rand(120, this.g.w - 120); const w = 220; this.g.tele.rect(x - w / 2, this.g.h - 220, w, 180, CSS('--c-water-2'), 700); setTimeout(() => { this.g.add(new Area(this.g, x, this.g.h - 120, { r: 10, maxR: 160, col: 'rgba(169,211,255,.3)', core: '#e9f3ff', life: 50, hostile: true, damage: 2 })); }, 720); }
+            snowBurst() { for (let i = 0; i < 18; i++) { const a = i * TAU / 18 + this.g.t; this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 3.2, vy: Math.sin(a) * 3.2, r: 6, col: CSS('--c-water-2'), hostile: true, damage: 1.2, spin: 0.2 })); } }
+        }
+
+        class Ventus extends Boss {
+            constructor(g) { super(g, 'Ventus — 疾風の守護者'); this.maxHp = 260; this.hp = this.maxHp; this.color1 = CSS('--c-wind'); this.color2 = CSS('--c-wind-2'); }
+            upd(dt) {
+                super.upd(dt); this.x = 480 + Math.sin(this.g.t * 1.1) * 260; this.y = 120 + Math.cos(this.g.t * 0.7) * 40;
+                if (this.tAttack > 1.4) { this.tAttack = 0;[this.sweep, this.tornado, this.spiralCutter, this.vacuumBlade][randi(0, 4)].call(this); }
+                if (this.hp < this.maxHp * 0.5) this.phase = 1;
+            }
+            sweep() { this.g.add(new Projectile(this.g, this.x, this.y, { vx: 0, vy: 6.8, shape: 'rect', w: 180, h: 12, col: CSS('--c-wind'), hostile: true, damage: 3, life: 80 })); }
+            tornado() {
+                const t = new Projectile(this.g, this.x, this.y, { vx: rand(-1, 1), vy: 1.1, r: 60, col: 'rgba(106,255,193,.18)', hostile: true, damage: 3, life: 220 });
+                t.draw = (ctx) => { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(this.g.t * 0.6); ctx.strokeStyle = CSS('--c-wind-2'); ctx.lineWidth = 3; for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.arc(0, 0, (t.r / 14) * i, 0, TAU); ctx.stroke(); } ctx.restore(); }; this.g.add(t);
+            }
+            spiralCutter() { for (let i = 0; i < 24; i++) { setTimeout(() => { const a = i * TAU / 24 * 2; this.g.add(new Projectile(this.g, this.x + Math.cos(a) * i * 4, this.y + Math.sin(a) * i * 4, { vx: Math.cos(a + Math.PI / 2) * 4.2, vy: Math.sin(a + Math.PI / 2) * 4.2, r: 6, col: CSS('--c-wind'), hostile: true, damage: 1.2 })); }, i * 36); } }
+            vacuumBlade() { for (let i = 0; i < 5; i++) { this.g.add(new Projectile(this.g, this.x, this.y, { vx: 0, vy: 4.8, shape: 'rect', w: 90, h: 8, col: CSS('--c-wind-2'), hostile: true, damage: 2.2, life: 120 })); } }
+        }
+
+        // =========================
+        //  Game Core
+        // =========================
+        class Game {
+            constructor() {
+                this.cv = document.getElementById('cv'); this.ctx = this.cv.getContext('2d');
+                this.w = this.cv.width; this.h = this.cv.height; this.t = 0; this.dt = 0; this.last = 0;
+                this.input = new Input(this.cv); this.vfx = new VFX(1600); this.tele = new Telegraph(document.getElementById('tele'), this); this.sound = new Sound();
+                this.entities = []; this.state = 'menu'; this.lowPerf = false; this.colorAid = false;
+
+                this.player = new Player(this);
+                this.campaign = [Ignis, Aqua, Ventus/*, Terra, Cosmos → Part2 で追加 */];
+                this.secret = []; // Part3 で Pierrot, FallenHero を追加
+                this.stage = 0; this.boss = null;
+
+                // UI
+                this.$menu = document.getElementById('menu');
+                this.$btnStart = document.getElementById('btnStart');
+                this.$btnSecret = document.getElementById('btnSecret');
+                this.$bossName = document.getElementById('bossName'); this.$bossHP = document.getElementById('bossHP');
+                this.$hpFill = document.getElementById('hpFill'); this.$hpText = document.getElementById('hpText'); this.$hpWrap = document.getElementById('hpWrap');
+                this.$togglePerf = document.getElementById('togglePerf'); this.$toggleColor = document.getElementById('toggleColor');
+
+                this.$btnStart.addEventListener('click', () => { this.sound.ensure(); this.startCampaign(); });
+                this.$togglePerf.addEventListener('click', () => { this.lowPerf = !this.lowPerf; this.$togglePerf.textContent = '軽量描画: ' + (this.lowPerf ? 'ON' : 'OFF'); });
+                this.$toggleColor.addEventListener('click', () => { this.colorAid = !this.colorAid; this.$toggleColor.textContent = '色覚補助: ' + (this.colorAid ? 'ON' : 'OFF'); });
+
+                requestAnimationFrame((t) => this.loop(t));
+            }
+
+            // Flow
+            startCampaign() { this.state = 'play'; this.stage = 0; this.player.reset(); this.entities.length = 0; this.$menu.classList.remove('show'); this.spawnBoss(); }
+            spawnBoss() { this.entities.length = 0; const Cls = this.campaign[this.stage]; this.boss = new Cls(this); this.boss.reset(); this.updateBossUI(); }
+            next() { // after boss defeat
+                this.stage++; if (this.stage >= this.campaign.length) { this.victory(); } else { this.spawnBoss(); }
+            }
+            victory() { this.state = 'menu'; this.$menu.classList.add('show'); this.$menu.querySelector('.title').textContent = 'VICTORY!'; this.$btnStart.textContent = 'Play Again'; }
+            defeat() { this.state = 'menu'; this.$menu.classList.add('show'); this.$menu.querySelector('.title').textContent = 'DEFEAT...'; this.$btnStart.textContent = 'Try Again'; }
+
+            add(e) { this.entities.push(e); }
+            entitiesPull(cx, cy, strength, hostilesOnly = true) {
+                for (const e of this.entities) {
+                    if (!(e instanceof Projectile) && !(e instanceof Area)) continue;
+                    if (hostilesOnly && !(e.hostile)) continue;
+                    const dx = cx - e.x, dy = cy - e.y; const d = Math.hypot(dx, dy) || 1; const f = strength / d;
+                    e.vx = (e.vx || 0) + dx * f; e.vy = (e.vy || 0) + dy * f;
+                }
+            }
+
+            // Collisions
+            hitEntityPlayer(e, p) {
+                if (e instanceof Laser) { return (p.x > e.x - e.w / 2 && p.x < e.x + e.w / 2 && p.y > e.y && p.y < e.y + e.h); }
+                if (e instanceof Area) { return dist(p.x, p.y, e.x, e.y) < (p.r + e.r); }
+                if (e.shape === 'rect') { return (p.x > e.x - e.w / 2 && p.x < e.x + e.w / 2 && p.y > e.y - e.h / 2 && p.y < e.y + e.h / 2); }
+                return dist(p.x, p.y, e.x, e.y) < (p.r + e.r);
+            }
+            hitEntityBoss(e, b) {
+                if (e instanceof Laser) { // circle vs rect
+                    const rx = e.x - e.w / 2, ry = e.y, rw = e.w, rh = e.h;
+                    const cx = b.x, cy = b.y, r = b.r;
+                    const nx = clamp(cx, rx, rx + rw), ny = clamp(cy, ry, ry + rh);
+                    return (dist(cx, cy, nx, ny) <= r);
+                }
+                if (e instanceof Area) { return dist(b.x, b.y, e.x, e.y) < (b.r + e.r); }
+                if (e.shape === 'rect') { // circle vs rect
+                    const rx = e.x - e.w / 2, ry = e.y - e.h / 2, rw = e.w, rh = e.h;
+                    const nx = clamp(b.x, rx, rx + rw), ny = clamp(b.y, ry, ry + rh);
+                    return (dist(b.x, b.y, nx, ny) <= b.r);
+                }
+                return dist(b.x, b.y, e.x, e.y) < (b.r + e.r);
+            }
+            checkCollisions() {
+                const p = this.player;
+                for (const e of this.entities) {
+                    if (!e) continue;
+                    if (e.hostile && this.hitEntityPlayer(e, p)) { p.take(e.damage || 1); if (e.onHit) e.onHit(); if (!(e instanceof Laser) && !(e instanceof Area)) e.dead = true; }
+                }
+                if (this.boss && !this.boss.dead) {
+                    for (const e of this.entities) {
+                        if (!e || !e.playerSkill) continue;
+                        if (this.hitEntityBoss(e, this.boss)) {
+                            this.boss.take(e.damage || 1); if (e.onHit) e.onHit(this.boss);
+                            if (e.pierce && e.pierce > 0) { e.pierce--; } else if (!(e instanceof Laser) && !(e instanceof Area)) { e.dead = true; }
+                        }
+                    }
+                }
+            }
+
+            // UI
+            updateBossUI() { if (!this.boss) return; this.$bossName.textContent = this.boss.name; const pct = this.boss.hp / this.boss.maxHp * 100; this.$bossHP.style.width = pct + '%'; }
+            updateUI() {
+                // Player HP
+                const hpPct = this.player.hp / this.player.maxHp * 100;
+                this.$hpFill.style.width = hpPct + '%';
+                this.$hpText.textContent = `${Math.max(0, Math.ceil(this.player.hp))} / ${this.player.maxHp}`;
+                this.$hpWrap.classList.toggle('low', this.player.hp <= this.player.maxHp * 0.3);
+                // Boss UI
+                if (this.boss) {
+                    this.$bossName.textContent = this.boss.name;
+                    const pct = this.boss.hp / this.boss.maxHp * 100; this.$bossHP.style.width = pct + '%';
+                    if (this.boss.phase === 0) this.$bossHP.style.background = 'linear-gradient(90deg,#ff5a3c,#ff9a47)';
+                    if (this.boss.phase === 1) this.$bossHP.style.background = 'linear-gradient(90deg,#4aa3ff,#a9d3ff)';
+                    if (this.boss.phase === 2) this.$bossHP.style.background = 'linear-gradient(90deg,#ff4cff,#ffffff)';
+                } else { this.$bossName.textContent = ''; this.$bossHP.style.width = '0%'; }
+            }
+
+            // Loop
+            loop(ts) {
+                this.dt = ((ts - this.last) || 16) / 1000; if (this.dt > 0.033) this.dt = 0.016; this.last = ts; this.t += this.dt;
+                if (this.state === 'play') {
+                    this.player.upd(this.dt);
+                    if (this.boss) { this.boss.upd(this.dt); if (this.boss.dead) { this.boss = null; setTimeout(() => this.next(), 700); } }
+                    for (const e of this.entities) e.upd(this.dt);
+                    this.entities = this.entities.filter(e => !e.dead);
+                    this.checkCollisions();
+                    this.player.skills.tick(this.dt);
+                    this.vfx.upd();
+
+                    // render
+                    const ctx = this.ctx; ctx.clearRect(0, 0, this.w, this.h);
+                    ctx.fillStyle = '#101230'; ctx.fillRect(0, 0, this.w, this.h);
+                    if (this.boss) this.boss.draw(ctx);
+                    for (const e of this.entities) e.draw(ctx);
+                    this.vfx.draw(ctx);
+                    this.player.draw(ctx);
+
+                    this.updateUI();
+                } else if (this.state === 'menu') {
+                    // idle render could be added
+                }
+                requestAnimationFrame((t) => this.loop(t));
+            }
+        }
+
+        // Boot
+        const game = new Game();
+        window.game = game;
+
+    </script>
+    <!-- === PART 2/3 START === -->
+    <script>
+        // ===============
+        // Part 2/3
+        // ===============
+
+        // -------- Terra（地） --------
+        class Terra extends Boss {
+            constructor(g) {
+                super(g, 'Terra — 大地の守護者');
+                this.maxHp = 300; this.hp = this.maxHp;
+                this.color1 = CSS('--c-earth'); this.color2 = CSS('--c-earth-2');
+            }
+            upd(dt) {
+                super.upd(dt);
+                this.x = 480 + Math.sin(this.g.t * 0.8) * 160;
+                this.y = 140 + Math.sin(this.g.t * 0.5) * 30;
+
+                if (this.tAttack > 1.9) {
+                    this.tAttack = 0;
+                    [this.rockShower, this.quake, this.crystalSpike, this.geyser][randi(0, 4)].call(this);
+                }
+                if (this.hp < this.maxHp * 0.5) this.phase = 1;
+            }
+            rockShower() {
+                for (let i = 0; i < 18; i++) {
+                    setTimeout(() => {
+                        this.g.add(new Projectile(this.g, rand(40, this.g.w - 40), -18, {
+                            vx: rand(-.2, .2), vy: rand(5.5, 7), r: 16,
+                            col: CSS('--c-earth'), hostile: true, damage: 2.4, gravity: 0.03, spin: 0.25, trail: true
+                        }));
+                    }, i * 100);
+                }
+            }
+            quake() {
+                const src = [
+                    { x: 0, y: 320, vx: 4.5, vy: 0 },
+                    { x: this.g.w, y: 320, vx: -4.5, vy: 0 },
+                    { x: 480, y: 0, vx: 0, vy: 4.5 },
+                    { x: 480, y: this.g.h, vx: 0, vy: -4.5 }
+                ];
+                src.forEach((s, idx) => {
+                    setTimeout(() => {
+                        for (let i = 0; i < 6; i++) {
+                            this.g.add(new Projectile(this.g, s.x, s.y, {
+                                vx: s.vx + rand(-.3, .3), vy: s.vy + rand(-.3, .3), r: 14,
+                                col: CSS('--c-earth-2'), hostile: true, damage: 1.9, life: 140
+                            }));
+                        }
+                    }, idx * 200);
+                });
+            }
+            crystalSpike() {
+                const bx = rand(120, this.g.w - 120);
+                this.g.tele.rect(bx - 16, this.g.h - 220, 32, 220, CSS('--c-earth-2'), 700);
+                setTimeout(() => {
+                    for (let y = 0; y < 220; y += 22) {
+                        this.g.add(new Projectile(this.g, bx, this.g.h - 20 - y, {
+                            vx: 0, vy: -3.2, r: 8, col: CSS('--c-earth-2'), hostile: true, damage: 1.6, life: 120
+                        }));
+                    }
+                }, 700);
+            }
+            geyser() {
+                const x = rand(80, this.g.w - 80);
+                this.g.tele.ring(x, this.g.h - 120, 60, CSS('--c-earth'), 600);
+                setTimeout(() => {
+                    this.g.add(new Area(this.g, x, this.g.h - 120, {
+                        r: 8, maxR: 120, col: 'rgba(228,179,148,.3)', core: '#fff4ea', life: 32, hostile: true, damage: 3.2
+                    }));
+                }, 620);
+            }
+        }
+
+        // -------- Cosmos（原初） — 集大成＆虹龍の吐息 -----------
+        class Cosmos extends Boss {
+            constructor(g) {
+                super(g, 'Cosmos — 原初の守護者');
+                this.maxHp = 440; this.hp = this.maxHp;           // やや増量
+                this.color1 = '#ffffff'; this.color2 = '#fff2a8';
+
+                // 元の元素循環は残すが「借用技プール」を追加
+                this.elems = ['fire', 'water', 'wind', 'earth', 'thunder', 'light'];
+                this.idx = 0; this.cur = 'fire'; this.tElem = 0;
+
+                // 攻撃テンポ
+                this.baseInterval = 1.05;     // 既存より速い
+                this.ultUsed = false;         // 虹龍の吐息は1戦1～2回（フェーズで最大2回）
+                this.ultCount = 0;
+
+                // 表ボスから借用した代表技（Cosmos版に最適化）
+                // 各要素ごとに3～4手、合計16手
+                this.pool = {
+                    fire: ['co_ringBurst', 'co_meteorRain', 'co_flameTiles'],
+                    water: ['co_tripleShard', 'co_waveRows', 'co_freezeField', 'co_snowBurst'],
+                    wind: ['co_sweep', 'co_tornado', 'co_spiralCutter', 'co_vacuumBlade'],
+                    earth: ['co_rockShower', 'co_quake', 'co_crystalSpike', 'co_geyser'],
+                    thunder: ['cBolt'],         // 既存コズミック雷
+                    light: ['cBeam']          // 既存コズミック光弾幕
+                };
+
+                // ランダム混合でも引ける総合プール（被り防止ロジック付き）
+                this.allMoves = [
+                    // Cosmic系（既存）
+                    'cFire', 'cIce', 'cStorm', 'cQuake', 'cBolt', 'cBeam',
+                    // 借用系（co_*）
+                    'co_ringBurst', 'co_meteorRain', 'co_flameTiles',
+                    'co_tripleShard', 'co_waveRows', 'co_freezeField', 'co_snowBurst',
+                    'co_sweep', 'co_tornado', 'co_spiralCutter', 'co_vacuumBlade',
+                    'co_rockShower', 'co_quake', 'co_crystalSpike', 'co_geyser'
+                ];
+                this.lastMove = null;
+            }
+
+            reset() {
+                super.reset();
+                this.idx = 0; this.cur = 'fire'; this.tElem = 0;
+                this.ultUsed = false; this.ultCount = 0;
+                this.lastMove = null;
+            }
+
+            upd(dt) {
+                super.upd(dt);
+
+                // 元の元素循環は4秒ごと継続（色演出に寄与）
+                this.tElem += dt;
+                if (this.tElem > 4) { this.tElem = 0; this.idx = (this.idx + 1) % this.elems.length; this.cur = this.elems[this.idx]; }
+
+                // 軌道（見た目は大きく、弾幕に絡む）
+                const amp = 260;
+                this.x = 480 + Math.sin(this.g.t * 0.65) * amp;
+                this.y = 140 + Math.cos(this.g.t * 0.42) * 42;
+
+                // フェーズ
+                if (this.hp < this.maxHp * 0.7) this.phase = 1;
+                if (this.hp < this.maxHp * 0.35) this.phase = 2;
+
+                // 攻撃テンポ（フェーズで加速）
+                let interval = this.baseInterval;
+                if (this.phase === 1) interval *= 0.88;
+                if (this.phase === 2) interval *= 0.76;
+
+                // 時々、究極技「虹龍の吐息」
+                const shouldUlt = (!this.ultUsed && this.phase >= 1) ||
+                    (this.phase === 2 && this.ultCount < 2 && Math.random() < 0.12);
+
+                if (this.tAttack > interval) {
+                    this.tAttack = 0;
+                    if (shouldUlt) {
+                        this.nijiDragonBreath();
+                        this.ultUsed = true; this.ultCount++;
+                        return;
+                    }
+                    this.pickAndCast();
+                }
+            }
+
+            draw(ctx) {
+                // オーラ強化（虹エフェクト）
+                ctx.save();
+                const cols = ['#ff5a3c', '#4aa3ff', '#6affc1', '#a4664b', '#f6ff52', '#ffffff'];
+                for (let i = 0; i < 6; i++) {
+                    ctx.fillStyle = cols[i] + '22'; ctx.shadowColor = cols[i]; ctx.shadowBlur = 26;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.r + 30 - i * 4, 0, TAU); ctx.fill();
+                }
+                const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r);
+                grd.addColorStop(0, '#ffffff'); grd.addColorStop(.6, this.color2); grd.addColorStop(1, '#000');
+                ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, TAU); ctx.fill();
+                ctx.restore();
+            }
+
+            // ===== 攻撃選択 =====
+            pickAndCast() {
+                // 現在元素の優先プール＋全体プールを混ぜ、直前技を避けて抽選
+                const fav = this.pool[this.cur] || [];
+                const bag = (Math.random() < 0.6 ? fav : this.allMoves);
+                let pick = bag[randi(0, bag.length)];
+                for (let i = 0; i < 2 && pick === this.lastMove; i++) pick = bag[randi(0, bag.length)];
+                this.lastMove = pick;
+                // 実行（存在確認）
+                this[pick] ? this[pick]() : this.cStorm();
+            }
+
+            // ===== 究極技：虹龍の吐息 =====
+            // 扇状に超多色の高速粒子を吐き出す → 吐息終盤に虹の衝撃波（Area）を重ねる
+            nijiDragonBreath() {
+                const g = this.g;
+                g.callout('虹龍の吐息', '#ffffff');
+
+                // 1) テレグラフ：虹の扇（リング＆短い矩形群）
+                const px = g.player.x, py = g.player.y;
+                const baseA = Math.atan2(py - this.y, px - this.x); // プレイヤー方向
+                const cone = Math.PI * 0.55;                        // 扇角
+                const teleMs = 550 * g.diff.tele;
+                for (let i = -3; i <= 3; i++) {
+                    const a = baseA + (i / 3) * (cone / 2);
+                    const rx = this.x + Math.cos(a) * 80, ry = this.y + Math.sin(a) * 80;
+                    g.tele.ring(rx, ry, 24, '#ffffff', teleMs);
+                }
+
+                // 2) 発動本体：多色粒子の高速吐息（約0.9s）
+                setTimeout(() => {
+                    const colors = ['#ff5a3c', '#ff9a47', '#f6ff52', '#6affc1', '#4aa3ff', '#b39aff', '#ffffff'];
+                    const burstTime = 900;           // 吐息時間
+                    const tick = 36;                 // 発生間隔(ms)
+                    const shotsPerTick = 26;         // 1ティックあたりの粒子数
+                    let elapsed = 0;
+
+                    const timer = setInterval(() => {
+                        elapsed += tick;
+                        if (elapsed >= burstTime) { clearInterval(timer); return; }
+                        for (let i = 0; i < shotsPerTick; i++) {
+                            const t = i / shotsPerTick;
+                            const a = baseA + (t - 0.5) * cone + rand(-0.02, 0.02);
+                            const sp = rand(7.4, 10.2) * (this.phase === 2 ? 1.08 : 1.0);
+                            const col = colors[(i + Math.floor(elapsed / tick)) % colors.length];
+                            const p = new Projectile(g, this.x, this.y, {
+                                vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                                r: 5, col, hostile: true, damage: 1.1, life: 150, trail: true, spin: 0.18
+                            });
+                            g.add(p);
+                            if (!g.lowPerf && (i % 3 === 0)) g.vfx.spawn(p.x, p.y, col, 18, 2, 0, 0);
+                        }
+                    }, tick);
+
+                    // 3) 終端の虹衝撃波（当たり判定はエリア円）
+                    setTimeout(() => {
+                        g.tele.ring(this.x, this.y, 120, '#ffffff', 520 * g.diff.tele);
+                        setTimeout(() => {
+                            g.add(new Area(g, this.x, this.y, {
+                                r: 12, maxR: 200, col: 'rgba(255,255,255,.30)', core: '#ffffff',
+                                life: 34, hostile: true, damage: (this.phase === 2 ? 5.0 : 4.0)
+                            }));
+                        }, 540 * g.diff.tele);
+                    }, burstTime - 150);
+
+                }, teleMs + 40);
+            }
+
+            // ====== 既存コズミック（ベース） ======
+            cFire() { // 環状放射（速度段階）
+                for (let r = 0; r < 3; r++) {
+                    for (let i = 0; i < 14; i++) {
+                        setTimeout(() => {
+                            const a = i * TAU / 14;
+                            this.g.add(new Projectile(this.g,
+                                this.x + Math.cos(a) * r * 24,
+                                this.y + Math.sin(a) * r * 24,
+                                { vx: Math.cos(a) * (2.8 + r * .5), vy: Math.sin(a) * (2.8 + r * .5), r: 7, col: CSS('--c-fire'), hostile: true, trail: true, damage: 1.6 }
+                            ));
+                        }, r * 160);
+                    }
+                }
+            }
+            cIce() { // 落氷列
+                for (let c = 0; c < 4; c++) {
+                    const xx = 160 + c * 160;
+                    for (let j = 0; j < 8; j++) {
+                        setTimeout(() => {
+                            this.g.add(new Projectile(this.g, xx, -20, { vx: 0, vy: 6.4, r: 10, col: CSS('--c-water'), hostile: true, damage: 1.8 }));
+                        }, j * 100);
+                    }
+                }
+            }
+            cStorm() { // 旋回スパイラル
+                for (let i = 0; i < 22; i++) {
+                    setTimeout(() => {
+                        const a = i * TAU / 22 * 2; const rad = i * 10;
+                        this.g.add(new Projectile(this.g,
+                            this.x + Math.cos(a) * rad,
+                            this.y + Math.sin(a) * rad,
+                            { vx: Math.cos(a + Math.PI / 2) * 3.8, vy: Math.sin(a + Math.PI / 2) * 3.8, r: 6, col: CSS('--c-wind'), hostile: true, damage: 1.2 }
+                        ));
+                    }, i * 36);
+                }
+            }
+            cQuake() { // 四辺震動弾
+                const s = [
+                    { x: 0, y: 320, vx: 4.2, vy: 0 },
+                    { x: this.g.w, y: 320, vx: -4.2, vy: 0 },
+                    { x: 480, y: 0, vx: 0, vy: 4.2 },
+                    { x: 480, y: this.g.h, vx: 0, vy: -4.2 }
+                ];
+                s.forEach((v, idx) => {
+                    setTimeout(() => {
+                        for (let i = 0; i < 5; i++) {
+                            this.g.add(new Projectile(this.g, v.x, v.y, { vx: v.vx + rand(-.4, .4), vy: v.vy + rand(-.4, .4), r: 12, col: CSS('--c-earth-2'), hostile: true, damage: 1.6 }));
+                        }
+                    }, idx * 200);
+                });
+            }
+            cBolt() { // ランダム雷柱連鎖
+                let x = rand(80, this.g.w - 80);
+                for (let i = 0; i < 7; i++) {
+                    setTimeout(() => {
+                        this.g.add(new Laser(this.g, x, 0, 18, this.g.h, CSS('--c-th'), 24, true));
+                        if (!this.g.lowPerf) this.g.vfx.burst(x, 160, '#fff889', 18, 20, 2);
+                    }, i * 160);
+                    x = rand(80, this.g.w - 80);
+                }
+            }
+            cBeam() { // 全方位光粒子
+                for (let i = 0; i < 360; i += 12) {
+                    setTimeout(() => {
+                        const a = i * Math.PI / 180;
+                        this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 5.6, vy: Math.sin(a) * 5.6, r: 5, col: '#ffffff', hostile: true, trail: true, damage: 1.5 }));
+                    }, i * 6);
+                }
+            }
+
+            // ====== 借用技（Ignis/Aqua/Ventus/Terra の高速版） ======
+            // Fire
+            co_ringBurst() {
+                this.g.callout('環状火球（原初）', CSS('--c-fire'));
+                const n = 20; for (let i = 0; i < n; i++) {
+                    const a = i * TAU / n; this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 3.8, vy: Math.sin(a) * 3.8, r: 7, col: CSS('--c-fire'), trail: true, life: 200, hostile: true, damage: 1.8 }));
+                }
+            }
+            co_meteorRain() {
+                this.g.callout('流星雨（原初）', CSS('--c-fire-2'));
+                for (let i = 0; i < 10; i++) setTimeout(() => {
+                    this.g.add(new Projectile(this.g, rand(40, this.g.w - 40), -20, { vx: rand(-.25, .25), vy: rand(5.0, 6.2), r: 18, col: CSS('--c-fire-2'), trail: true, gravity: 0.02, hostile: true, damage: 2.0 }));
+                }, i * 90);
+            }
+            co_flameTiles() {
+                const cols = 8; const tileW = this.g.w / cols; const col = randi(0, cols);
+                this.g.callout('炎床（原初）', CSS('--c-fire-2'));
+                this.g.tele.rect(col * tileW, this.g.h - 180, tileW, 180, CSS('--c-fire-2'), 560);
+                setTimeout(() => {
+                    for (let i = 0; i < 18; i++) this.g.add(new Projectile(this.g, col * tileW + rand(0, tileW), this.g.h - 190, { vx: rand(-.3, .3), vy: -rand(2, 3.6), r: 6, col: CSS('--c-fire'), hostile: true, life: 90 }));
+                }, 580);
+            }
+
+            // Water
+            co_tripleShard() {
+                this.g.callout('三連氷弾（原初）', CSS('--c-water'));
+                const p = this.g.player; const b = Math.atan2(p.y - this.y, p.x - this.x);
+                for (let i = -1; i <= 1; i++) {
+                    const a = b + i * 0.24;
+                    this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 4.8, vy: Math.sin(a) * 4.8, r: 7, col: CSS('--c-water'), hostile: true, damage: 1.7, trail: true }));
+                }
+            }
+            co_waveRows() {
+                this.g.callout('波列（原初）', CSS('--c-water-2'));
+                for (let i = 0; i < 12; i++) setTimeout(() => {
+                    this.g.add(new Projectile(this.g, i * (this.g.w / 12) + 16, this.g.h + 24, { vx: 0, vy: -5.8, r: 9, col: CSS('--c-water-2'), hostile: true, damage: 1.5 }));
+                }, i * 54);
+            }
+            co_freezeField() {
+                this.g.callout('凍結床（原初）', CSS('--c-water-2'));
+                const x = rand(120, this.g.w - 120), w = 220;
+                this.g.tele.rect(x - w / 2, this.g.h - 220, w, 180, CSS('--c-water-2'), 560);
+                setTimeout(() => { this.g.add(new Area(this.g, x, this.g.h - 120, { r: 10, maxR: 160, col: 'rgba(169,211,255,.3)', core: '#e9f3ff', life: 46, hostile: true, damage: 2.2 })); }, 580);
+            }
+            co_snowBurst() {
+                this.g.callout('雪弾Burst（原初）', CSS('--c-water-2'));
+                for (let i = 0; i < 18; i++) {
+                    const a = i * TAU / 18 + this.g.t;
+                    this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 3.4, vy: Math.sin(a) * 3.4, r: 6, col: CSS('--c-water-2'), hostile: true, damage: 1.2, spin: 0.22 }));
+                }
+            }
+
+            // Wind
+            co_sweep() {
+                this.g.callout('薙ぎ払い（原初）', CSS('--c-wind'));
+                this.g.add(new Projectile(this.g, this.x, this.y, { vx: 0, vy: 7.0, shape: 'rect', w: 180, h: 12, col: CSS('--c-wind'), hostile: true, damage: 3.0, life: 76 }));
+            }
+            co_tornado() {
+                this.g.callout('竜巻（原初）', CSS('--c-wind-2'));
+                const t = new Projectile(this.g, this.x, this.y, { vx: rand(-1, 1), vy: 1.2, r: 60, col: 'rgba(106,255,193,.16)', hostile: true, damage: 3.0, life: 210 });
+                t.draw = (ctx) => { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(this.g.t * 0.7); ctx.strokeStyle = CSS('--c-wind-2'); ctx.lineWidth = 3; for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.arc(0, 0, (t.r / 14) * i, 0, TAU); ctx.stroke(); } ctx.restore(); };
+                this.g.add(t);
+            }
+            co_spiralCutter() {
+                this.g.callout('螺旋カッター（原初）', CSS('--c-wind'));
+                for (let i = 0; i < 24; i++) setTimeout(() => {
+                    const a = i * TAU / 24 * 2;
+                    this.g.add(new Projectile(this.g, this.x + Math.cos(a) * i * 4, this.y + Math.sin(a) * i * 4, { vx: Math.cos(a + Math.PI / 2) * 4.3, vy: Math.sin(a + Math.PI / 2) * 4.3, r: 6, col: CSS('--c-wind'), hostile: true, damage: 1.2 }));
+                }, i * 32);
+            }
+            co_vacuumBlade() {
+                this.g.callout('真空刃（原初）', CSS('--c-wind-2'));
+                for (let i = 0; i < 5; i++) this.g.add(new Projectile(this.g, this.x, this.y, { vx: 0, vy: 5.0, shape: 'rect', w: 90, h: 8, col: CSS('--c-wind-2'), hostile: true, damage: 2.2, life: 110 }));
+            }
+
+            // Earth
+            co_rockShower() {
+                this.g.callout('岩雨（原初）', CSS('--c-earth'));
+                for (let i = 0; i < 16; i++) setTimeout(() => {
+                    this.g.add(new Projectile(this.g, rand(40, this.g.w - 40), -18, { vx: rand(-.2, .2), vy: rand(5.6, 7.2), r: 16, col: CSS('--c-earth'), hostile: true, damage: 2.2, gravity: 0.03, spin: 0.25, trail: true }));
+                }, i * 80);
+            }
+            co_quake() { this.g.callout('震動弾（原初）', CSS('--c-earth-2')); this.cQuake(); }
+            co_crystalSpike() {
+                this.g.callout('結晶杭（原初）', CSS('--c-earth-2'));
+                const bx = rand(120, this.g.w - 120);
+                this.g.tele.rect(bx - 16, this.g.h - 220, 32, 220, CSS('--c-earth-2'), 560);
+                setTimeout(() => { for (let y = 0; y < 220; y += 22) this.g.add(new Projectile(this.g, bx, this.g.h - 20 - y, { vx: 0, vy: -3.2, r: 8, col: CSS('--c-earth-2'), hostile: true, damage: 1.6, life: 110 })); }, 580);
+            }
+            co_geyser() {
+                this.g.callout('間欠泉（原初）', CSS('--c-earth'));
+                const x = rand(80, this.g.w - 80);
+                this.g.tele.ring(x, this.g.h - 120, 60, CSS('--c-earth'), 520);
+                setTimeout(() => { this.g.add(new Area(this.g, x, this.g.h - 120, { r: 8, maxR: 120, col: 'rgba(228,179,148,.30)', core: '#fff4ea', life: 30, hostile: true, damage: 3.0 })); }, 540);
+            }
+
+            onDefeat() {
+                // 裏解禁フック（現状維持）
+                try {
+                    localStorage.setItem('elem_ultra_secret', '1');
+                    const btn = document.getElementById('btnSecret'); if (btn) btn.style.display = 'inline-block';
+                } catch (e) { }
+            }
+        }
+
+
+        // -------- 状態異常の可視化強化（Shock/Bleed 土台＋演出） --------
+        (function enhanceStatus() {
+            const _upd = Boss.prototype.upd;
+            Boss.prototype.upd = function (dt) {
+                _upd.call(this, dt);
+                // Shock/Bleed の軽い演出（数値は Part3 の裏でより強化）
+                if (this.status.shock > 0 && !this.g.lowPerf) {
+                    this.g.vfx.spawn(this.x + rand(-6, 6), this.y + rand(-6, 6), CSS('--c-th-2'), 14, 2, 0, -0.4);
+                }
+                if (this.status.bleed > 0 && !this.g.lowPerf) {
+                    this.g.vfx.spawn(this.x + rand(-6, 6), this.y + rand(-6, 6), '#ff8080', 14, 2, 0, 0.2);
+                }
+            };
+        })();
+
+        // -------- アップグレードUI（3択）と進行フロー上書き --------
+        (function injectUpgradeUI() {
+            // DOM 生成（Part1 のHTMLに存在しないため、ここで動的追加）
+            const root = document.getElementById('game');
+            const upg = document.createElement('div'); upg.id = 'upg'; upg.className = 'menu'; // menu風オーバーレイを再利用
+            upg.style.background = 'rgba(0,0,20,.86)';
+            upg.innerHTML = `
+    <div class="title" style="font-size:32px">スキル強化を選択（1つ）</div>
+    <div id="upgGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:80%"></div>
+    <div style="opacity:.7;font-size:12px">各スキルは Lv3 まで。選ぶたびに効果が強化されます。</div>
+  `;
+            root.appendChild(upg);
+
+            const styl = document.createElement('style');
+            styl.textContent = `
+    #upgGrid .opt{background:#0a0d2a;border:2px solid #2e3366;padding:12px;cursor:pointer}
+    #upgGrid .opt:hover{border-color:#8aa1ff}
+    #upgGrid .cap{opacity:.6}
+  `;
+            document.head.appendChild(styl);
+
+            // Game にメソッドを生やす
+            Game.prototype.showUpgrade = function () {
+                const grid = document.getElementById('upgGrid'); const overlay = document.getElementById('upg');
+                grid.innerHTML = '';
+                const all = SKILL_META.map(s => s.id); const picks = [];
+                while (picks.length < 3) { const id = all[randi(0, all.length)]; if (!picks.includes(id)) picks.push(id); }
+
+                picks.forEach(id => {
+                    const s = this.player.skills.list[id]; const can = s.lvl < 3;
+                    const div = document.createElement('div'); div.className = 'opt';
+                    div.innerHTML = `
+        <div style="font-weight:900">${labelOf(id)} を強化</div>
+        <div style="opacity:.85;font-size:12px">現在Lv ${s.lvl} → ${can ? ('Lv ' + (s.lvl + 1)) : '最大'}</div>
+        <div style="opacity:.7;font-size:12px;margin-top:6px">${this._augmentDesc(id, s.lvl)}</div>
+      `;
+                    if (!can) { div.classList.add('cap'); }
+                    div.addEventListener('click', () => {
+                        if (can) { s.lvl++; }
+                        overlay.classList.remove('show');
+                        this.advance();
+                    });
+                    grid.appendChild(div);
+                });
+                overlay.classList.add('show');
+            };
+
+            Game.prototype._augmentDesc = function (id, lvl) {
+                const L = lvl + 1;
+                switch (id) {
+                    case 'fire': return `扇状弾 +1、Burn発生率 +10%（Lv${L})`;
+                    case 'water': return `速度 +1.5、貫通 +1、凍結 +30f（Lv${L})`;
+                    case 'wind': return `刃 +2、散開角 +0.08rad（Lv${L})`;
+                    case 'earth': return `同時杭 +1、範囲 +10（Lv${L})`;
+                    case 'thunder': return `柱持続 +10f、連鎖 +1（Lv${L})`;
+                    case 'light': return `回復 +5、無敵 +0.2s（Lv${L})`;
+                    case 'dark': return `半径 +20、持続 +15f、引力 +0.15（Lv${L})`;
+                    case 'atom': return `最大半径 +20、中心DPS +2、引力 +0.25（Lv${L})`;
+                }
+                return '';
+            };
+
+            // next() を上書き：各ステージ間で強化選択（ただし最終は勝利へ）
+            const _next = Game.prototype.next;
+            Game.prototype.next = function () {
+                // Cosmos 処理（勝利時は _next の victory へ）
+                const lastIdx = this.campaign.length - 1;
+                if (this.stage === lastIdx) { return _next.call(this); }
+
+                // 通常はアップグレード画面へ
+                this.stage++;
+                if (this.stage > lastIdx) { this.victory(); return; }
+                // アップグレード→advance()で spawnBoss()
+                this.showUpgrade();
+            };
+
+            Game.prototype.advance = function () {
+                this.entities.length = 0;
+                this.spawnBoss();
+            };
+
+        })();
+
+        // -------- ループのパフォーマンス最適化（swap-pop） --------
+        (function optimizeLoop() {
+
+            Game.prototype._compact = false; // デフォは filter、必要なら true に
+            // 軽量描画トグルに連動してcompactもONにする
+            const tPerf = document.getElementById('togglePerf');
+            if (tPerf) {
+                const _click = tPerf.onclick;
+                tPerf.onclick = (ev) => {
+                    _click && _click(ev);
+                    game._compact = game.lowPerf; // 軽量ON時にswap-popへ
+                };
+            }
+
+            function compactArray(arr) {
+                // 真偽の dead に基づく swap-pop
+                let i = 0, n = arr.length;
+                while (i < n) {
+                    if (arr[i] && !arr[i].dead) { i++; continue; }
+                    // swap last to i
+                    arr[i] = arr[n - 1];
+                    arr.pop();
+                    n--;
+                }
+            }
+
+            // ループの上書き（描画軽量化も追加）
+            Game.prototype.loop = function (ts) {
+                this.dt = ((ts - this.last) || 16) / 1000; if (this.dt > 0.033) this.dt = 0.016; this.last = ts; this.t += this.dt;
+
+                if (this.state === 'play') {
+                    this.player.upd(this.dt);
+                    if (this.boss) {
+                        this.boss.upd(this.dt);
+                        if (this.boss.dead) { this.boss = null; setTimeout(() => this.next(), 700); }
+                    }
+
+                    // update entities
+                    for (let i = 0; i < this.entities.length; i++) { this.entities[i].upd(this.dt); }
+                    if (this._compact) compactArray(this.entities); else this.entities = this.entities.filter(e => !e.dead);
+
+                    this.checkCollisions();
+                    this.player.skills.tick(this.dt);
+                    this.vfx.upd();
+
+                    // render
+                    const ctx = this.ctx;
+                    ctx.clearRect(0, 0, this.w, this.h);
+                    // 軽量描画モードでは背景・影・粒子を抑える
+                    if (this.lowPerf) { ctx.fillStyle = '#0f1130'; } else { ctx.fillStyle = '#101230'; }
+                    ctx.fillRect(0, 0, this.w, this.h);
+
+                    if (this.boss) this.boss.draw(ctx);
+
+                    // エンティティ描画（軽量時は影抑制済みのものが多い）
+                    for (let i = 0; i < this.entities.length; i++) { this.entities[i].draw(ctx); }
+
+                    // 粒子は軽量時も最低限表示（shadowBlurはParticle側が固定最小）
+                    this.vfx.draw(ctx);
+
+                    this.player.draw(ctx);
+                    this.updateUI();
+
+                }
+                requestAnimationFrame((t) => this.loop(t));
+            };
+
+        })();
+
+        // -------- キャンペーンに Terra / Cosmos を追加 --------
+        (function extendCampaign() {
+            // 既存の game インスタンスに対して配列拡張
+            if (window.game) {
+                game.campaign.push(Terra, Cosmos);
+            } else {
+                // 念のため：読み込み順で game が未生成なら、生成後に extend されるようフック
+                window.addEventListener('load', () => { if (window.game) game.campaign.push(Terra, Cosmos); });
+            }
+        })();
+    </script>
+    <!-- === PART 3/3 START === -->
+    <script>
+        // ===================
+        // Part 3/3 — Secrets
+        // ===================
+
+        // -------- RNG（Seedable） --------
+        const RNG = (function () {
+            let _orig = Math.random;
+            let _fn = null;
+            function mulberry32(a) { return function () { let t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+            return {
+                enable(seedStr) {
+                    let seed = 0; for (let i = 0; i < seedStr.length; i++) { seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0; }
+                    if (seed === 0) seed = 0x1234abcd;
+                    _fn = mulberry32(seed >>> 0);
+                    Math.random = function () { return _fn(); };
+                },
+                disable() { Math.random = _orig; },
+                current() { return _fn; },
+            };
+        })();
+
+        // メニューに難易度/シードUIを追加
+        (function injectMenuEnhance() {
+            const menu = document.getElementById('menu');
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:8px';
+            row.innerHTML = `
+    <div style="background:#0b0e2a;border:2px solid var(--line);padding:8px 10px">
+      <div style="font-family:Orbitron;font-weight:900;font-size:12px;opacity:.85">DIFFICULTY</div>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <label><input type="radio" name="dif" value="N"> Normal</label>
+        <label><input type="radio" name="dif" value="H"> Hard</label>
+        <label><input type="radio" name="dif" value="C"> Chaos</label>
+      </div>
+    </div>
+    <div style="background:#0b0e2a;border:2px solid var(--line);padding:8px 10px">
+      <div style="font-family:Orbitron;font-weight:900;font-size:12px;opacity:.85">SEED</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+        <input id="seedInput" placeholder="任意のテキスト" style="width:180px;background:#0f1236;color:#e5e7ff;border:1px solid #3a3e74;padding:6px">
+        <button class="btn" id="btnSameSeed" style="padding:8px 10px">同シードで再戦</button>
+      </div>
+    </div>
+  `;
+            menu.insertBefore(row, menu.children[2]);
+
+            // 難易度とシード保存・復元
+            const radios = row.querySelectorAll('input[name="dif"]');
+            const seedInput = row.querySelector('#seedInput');
+            const same = row.querySelector('#btnSameSeed');
+
+            function load() {
+                try {
+                    const dif = localStorage.getItem('elem_ultra_dif') || 'N';
+                    radios.forEach(r => r.checked = (r.value === dif));
+                    const seed = localStorage.getItem('elem_ultra_seed') || '';
+                    seedInput.value = seed;
+                    const sec = localStorage.getItem('elem_ultra_secret') === '1';
+                    const btnSecret = document.getElementById('btnSecret'); if (btnSecret) btnSecret.style.display = sec ? 'inline-block' : 'none';
+                } catch (e) { }
+            }
+            function saveDif(v) { try { localStorage.setItem('elem_ultra_dif', v); } catch (e) { } }
+            function saveSeed(v) { try { localStorage.setItem('elem_ultra_seed', v); } catch (e) { } }
+
+            radios.forEach(r => r.addEventListener('change', () => saveDif(r.value)));
+            seedInput.addEventListener('change', () => saveSeed(seedInput.value));
+            same.addEventListener('click', () => {
+                const v = seedInput.value.trim();
+                if (v) { RNG.enable(v); try { localStorage.setItem('elem_ultra_seed', v); } catch (e) { } }
+                if (window.game) { game.startCampaign(true/*same seed*/); }
+            });
+
+            // Start/Secret ボタンにシード適用
+            const start = document.getElementById('btnStart');
+            const secret = document.getElementById('btnSecret');
+            start.addEventListener('click', () => {
+                const v = seedInput.value.trim(); if (v) RNG.enable(v); else RNG.disable();
+            }, { capture: true });
+            if (secret) {
+                secret.addEventListener('click', () => {
+                    const v = seedInput.value.trim(); if (v) RNG.enable(v); else RNG.disable();
+                }, { capture: true });
+            }
+
+            load();
+        })();
+
+        // 難易度スケーラーを Game に実装
+        (function diffScaler() {
+            Game.prototype.diff = { mode: 'N', hp: 1, dmg: 1, spd: 1, tele: 1 };
+            Game.prototype.setDifficulty = function (mode) {
+                this.diff.mode = mode || 'N';
+                if (mode === 'N') { this.diff.hp = 1.0; this.diff.dmg = 1.0; this.diff.spd = 1.0; this.diff.tele = 1.0; }
+                if (mode === 'H') { this.diff.hp = 1.25; this.diff.dmg = 1.25; this.diff.spd = 1.10; this.diff.tele = 0.9; }
+                if (mode === 'C') { this.diff.hp = 1.6; this.diff.dmg = 1.6; this.diff.spd = 1.2; this.diff.tele = 0.75; }
+            };
+
+            // メニューのラジオから読み取って開始時に確定
+            const _start = Game.prototype.startCampaign;
+            Game.prototype.startCampaign = function (keepSeed = false) {
+                try {
+                    const dif = localStorage.getItem('elem_ultra_dif') || 'N';
+                    this.setDifficulty(dif);
+                } catch (e) { this.setDifficulty('N'); }
+                _start.call(this);
+                if (!keepSeed) { // 「Play Again」で新シードにしたい場合は入力値からenableされるのでここでは触らない
+                }
+            };
+
+            // Secret run
+            Game.prototype.startSecret = function () {
+                try {
+                    const dif = localStorage.getItem('elem_ultra_dif') || 'N';
+                    this.setDifficulty(dif);
+                } catch (e) { this.setDifficulty('N'); }
+                this.state = 'play'; this.stage = 0; this.player.reset(); this.entities.length = 0; this.$menu.classList.remove('show');
+                this._isSecretRun = true; this._backupCampaign = this.campaign.slice();
+                this.campaign = this.secret.slice();
+                this.spawnBoss();
+            };
+
+            // add() を難易度でスケール
+            const _add = Game.prototype.add;
+            Game.prototype.add = function (e) {
+                // 敵弾・フィールド攻撃の速度/ダメージスケール
+                if (e && e.hostile) {
+                    if (typeof e.vx === 'number') e.vx *= this.diff.spd;
+                    if (typeof e.vy === 'number') e.vy *= this.diff.spd;
+                    if (typeof e.damage === 'number') e.damage *= this.diff.dmg;
+                    if (e instanceof Laser || e instanceof Area) {
+                        // レーザー/エリアはダメージのみやや強化
+                        e.damage *= this.diff.dmg;
+                    }
+                    // 軽量描画ONなら影抑制
+                    if (this.lowPerf) e._noShadow = true;
+                }
+                if (e && e.playerSkill && this.lowPerf) e._noShadow = true;
+                _add.call(this, e);
+            };
+
+            // Telegraph 時間を難易度でスケール
+            const _ring = Telegraph.prototype.ring;
+            Telegraph.prototype.ring = function (x, y, r, color, ms) { _ring.call(this, x, y, r, color, (ms || 600) * game.diff.tele); }
+            const _rect = Telegraph.prototype.rect;
+            Telegraph.prototype.rect = function (x, y, w, h, color, ms) { _rect.call(this, x, y, w, h, color, (ms || 600) * game.diff.tele); }
+
+            // boss spawn 時にHPスケール
+            const _spawn = Game.prototype.spawnBoss;
+            Game.prototype.spawnBoss = function () {
+                _spawn.call(this);
+                if (this.boss) {
+                    // スケール適用
+                    this.boss.maxHp = Math.floor(this.boss.maxHp * this.diff.hp);
+                    this.boss.hp = this.boss.maxHp;
+                    // Chaosでは攻撃名コールアウトをもう少し短く
+                    this._calloutTime = (this.diff.mode === 'C') ? 700 : 1000;
+                }
+            };
+
+            // Victory/戻し
+            const _victory = Game.prototype.victory;
+            Game.prototype.victory = function () {
+                // キャンペーンを戻す（シークレットなら）
+                if (this._isSecretRun) {
+                    this.campaign = this._backupCampaign || this.campaign;
+                    this._isSecretRun = false;
+                }
+                _victory.call(this);
+            };
+        })();
+
+        // コールアウト表示（攻撃名）
+        (function calloutUI() {
+            const holder = document.createElement('div');
+            holder.style.cssText = 'position:absolute;left:50%;top:64px;transform:translateX(-50%);font-family:Orbitron;font-weight:900;font-size:20px;pointer-events:none;text-shadow:0 2px 0 rgba(0,0,0,.5)';
+            holder.id = 'callout';
+            holder.textContent = '';
+            document.getElementById('game').appendChild(holder);
+            Game.prototype.callout = function (text, color) {
+                const el = document.getElementById('callout');
+                el.textContent = text || '';
+                el.style.color = color || '#e6e9ff';
+                el.style.opacity = '1';
+                clearTimeout(this._calloutTimer);
+                this._calloutTimer = setTimeout(() => { el.style.opacity = '0'; }, this._calloutTime || 1000);
+            };
+        })();
+
+        // Pause（Esc）
+        (function pauseFeature() {
+            const overlay = document.createElement('div');
+            overlay.className = 'menu';
+            overlay.id = 'pause';
+            overlay.innerHTML = `<div class="title">PAUSED</div><button class="btn" id="resume">RESUME</button>`;
+            document.getElementById('game').appendChild(overlay);
+            window.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && game.state === 'play') {
+                    game.state = 'pause';
+                    overlay.classList.add('show');
+                } else if (e.key === 'Escape' && game.state === 'pause') {
+                    game.state = 'play';
+                    overlay.classList.remove('show');
+                }
+            });
+            overlay.querySelector('#resume').addEventListener('click', () => {
+                game.state = 'play'; overlay.classList.remove('show');
+            });
+
+            // defeat/victory 時は pause を消す
+            const _victory = Game.prototype.victory; Game.prototype.victory = function () { overlay.classList.remove('show'); _victory.call(this); };
+            const _defeat = Game.prototype.defeat; Game.prototype.defeat = function () { overlay.classList.remove('show'); _defeat.call(this); };
+        })();
+
+        // ------------------------------
+        // 裏ボス #1：Pierrot（道化）
+        // ------------------------------
+        class Pierrot extends Boss {
+            constructor(g) {
+                super(g, 'Pierrot — 歪んだ道化');
+                this.maxHp = 520; this.hp = this.maxHp;
+                this.color1 = CSS('--c-dark'); this.color2 = CSS('--c-dark-2');
+                this.comboChain = 0; // 連携：スポットライト→ギロチン の接続など
+            }
+            reset() { super.reset(); this.comboChain = 0; }
+            upd(dt) {
+                super.upd(dt);
+                this.x = 480 + Math.sin(this.g.t * 0.65) * 240;
+                this.y = 140 + Math.sin(this.g.t * 0.4) * 38;
+                if (this.tAttack > 1.15) {
+                    this.tAttack = 0;
+                    const table = [this.cardsFan, this.balloonBomb, this.threads, this.guillotine, this.spotlight, this.nitrous, this.juggling, this.trapdoor, this.confetti, this.circusTrain];
+                    // 連携：スポットライトの直後はギロチンを優先
+                    if (this.comboChain === 1) { this.comboChain = 0; return this.guillotine(); }
+                    table[randi(0, table.length)].call(this);
+                }
+                if (this.hp < this.maxHp * 0.6) this.phase = 1;
+                if (this.hp < this.maxHp * 0.3) this.phase = 2;
+            }
+
+            // 1) カード扇
+            cardsFan() {
+                this.g.callout('カード・ファン', CSS('--c-dark-2'));
+                const n = 24; const base = this.g.t;
+                for (let i = 0; i < n; i++) {
+                    setTimeout(() => {
+                        const a = base + i * TAU / n;
+                        this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 4.4, vy: Math.sin(a) * 4.4, r: 7, col: CSS('--c-dark'), hostile: true, damage: 1.8, spin: 0.25 }));
+                    }, i * 26);
+                }
+            }
+            // 2) バルーン爆弾（時間差爆発）
+            balloonBomb() {
+                this.g.callout('バルーン爆弾', CSS('--c-dark-2'));
+                for (let i = 0; i < 6; i++) {
+                    const bx = rand(80, this.g.w - 80), by = rand(100, this.g.h - 180);
+                    this.g.tele.ring(bx, by, 26, '#ff6bdd', 600);
+                    setTimeout(() => {
+                        for (let k = 0; k < 12; k++) {
+                            const a = k * TAU / 12;
+                            this.g.add(new Projectile(this.g, bx, by, { vx: Math.cos(a) * 3.6, vy: Math.sin(a) * 3.6, r: 6, col: '#ff6bdd', hostile: true, damage: 1.4, trail: true }));
+                        }
+                    }, 620);
+                }
+            }
+            // 3) 糸（縦帯）
+            threads() {
+                this.g.callout('糸', CSS('--c-dark-2'));
+                for (let i = 0; i < 5; i++) {
+                    const x = rand(80, this.g.w - 80);
+                    this.g.tele.rect(x - 8, 0, 16, this.g.h, '#d0b2ff', 500);
+                    setTimeout(() => { this.g.add(new Laser(this.g, x, 0, 16, this.g.h, '#d0b2ff', 30, true)); }, 520);
+                }
+            }
+            // 4) ギロチン（落下）
+            guillotine() {
+                this.g.callout('ギロチン', CSS('--c-dark-2'));
+                const x = this.g.player.x;
+                this.g.tele.rect(x - 18, -10, 36, 160, '#ff4e72', 600);
+                setTimeout(() => {
+                    this.g.add(new Projectile(this.g, x, -20, { vx: 0, vy: 10.4, shape: 'rect', w: 36, h: 120, col: '#ff4e72', hostile: true, damage: 3.8, life: 80 }));
+                }, 620);
+            }
+            // 5) スポットライト（追尾帯）→ 次手でギロチンを確定
+            spotlight() {
+                this.g.callout('スポットライト', CSS('--c-dark-2'));
+                const px = this.g.player.x;
+                this.g.tele.rect(px - 36, 0, 72, this.g.h, '#fff5a8', 700);
+                this.comboChain = 1; // 次はギロチン
+                setTimeout(() => { this.g.add(new Laser(this.g, px, 0, 72, this.g.h, '#fff2a8', 24, true)); }, 720);
+            }
+            // 6) 笑気霧（毒雲）
+            nitrous() {
+                this.g.callout('笑気霧', CSS('--c-dark-2'));
+                for (let i = 0; i < 4; i++) {
+                    const x = rand(120, this.g.w - 120), y = rand(160, this.g.h - 160);
+                    this.g.tele.ring(x, y, 48, '#c18cff', 600);
+                    setTimeout(() => {
+                        const a = new Area(this.g, x, y, { r: 16, maxR: 120, col: 'rgba(195,140,255,.25)', core: '#fff', life: 80, hostile: true, damage: 1.4 });
+                        a.upd = (dt) => { Area.prototype.upd.call(a, dt); if ((a.life % 10) === 0 && !this.g.lowPerf) { this.g.vfx.spawn(a.x + rand(-a.r, a.r), a.y + rand(-a.r, a.r), '#c18cff', 14, 2, 0, -0.2); } };
+                        this.g.add(a);
+                    }, 620);
+                }
+            }
+            // 7) ジャグリング（曲線弾）
+            juggling() {
+                this.g.callout('ジャグリング', CSS('--c-dark-2'));
+                for (let i = 0; i < 10; i++) {
+                    const a = this.g.t + i * 0.4;
+                    const p = new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 2.0, vy: Math.sin(a) * 2.0, r: 7, col: '#ffb6ff', hostile: true, damage: 1.6, life: 220 });
+                    p.upd = (dt) => { p.vx += Math.sin(this.g.t * 1.2 + i) * 0.06; p.vy += Math.cos(this.g.t * 1.1 + i) * 0.06; Projectile.prototype.upd.call(p, dt); };
+                    this.g.add(p);
+                }
+            }
+            // 8) トラップドア（床爆）
+            trapdoor() {
+                this.g.callout('トラップドア', CSS('--c-dark-2'));
+                const cols = 6; const tileW = this.g.w / cols; const choose = randi(0, cols);
+                this.g.tele.rect(choose * tileW, this.g.h - 180, tileW, 180, '#ff9be2', 600);
+                setTimeout(() => {
+                    this.g.add(new Area(this.g, choose * tileW + tileW / 2, this.g.h - 110, { r: 14, maxR: 150, col: 'rgba(255,155,226,.25)', core: '#fff', life: 36, hostile: true, damage: 3.2 }));
+                }, 620);
+            }
+            // 9) コンフェッティ（拡散）
+            confetti() {
+                this.g.callout('コンフェッティ', CSS('--c-dark-2'));
+                for (let i = 0; i < 64; i++) {
+                    const a = i * TAU / 64; const sp = rand(2.8, 4.2);
+                    this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 4, col: '#ffd6ff', hostile: true, damage: 0.9, life: 180 }));
+                }
+            }
+            // 10) サーカス列車（横掃除）
+            circusTrain() {
+                this.g.callout('サーカス列車', CSS('--c-dark-2'));
+                const top = Math.random() < 0.5 ? 160 : 240;
+                const left = Math.random() < 0.5;
+                this.g.tele.rect(left ? 0 : this.g.w - 20, top, 20, 120, '#ff7ad4', 600);
+                setTimeout(() => {
+                    const car = new Projectile(this.g, left ? -40 : this.g.w + 40, top + 60, { vx: left ? 8.5 : -8.5, vy: 0, shape: 'rect', w: 120, h: 120, col: '#ff7ad4', hostile: true, damage: 3.2, life: 200 });
+                    this.g.add(car);
+                }, 620);
+            }
+        }
+
+        // ------------------------------
+        // 裏ボス #2：Fallen Hero（朽ちた勇者）— 超拡張版
+        // ------------------------------
+        class FallenHero extends Boss {
+            constructor(g) {
+                super(g, 'Fallen Hero — 朽ちた勇者');
+                this.maxHp = 560; this.hp = this.maxHp;
+                this.color1 = CSS('--c-light'); this.color2 = '#b7fffb';
+                this.parryWindow = 0;
+
+                // 追加パラメータ
+                this.enraged = false;           // 覚醒フラグ（HP15%で一度だけ発動）
+                this.lastMove = null;           // 直前の技（連打抑止）
+                this.campT = 0;                 // 下部キャンプ時間（アンチキャンプ起動）
+                this.intervalBase = 1.08;       // 基本行動間隔（秒）— フェーズ/覚醒で短縮
+            }
+
+            // 行動ループ
+            upd(dt) {
+                super.upd(dt);
+                if (this.parryWindow > 0) this.parryWindow--;
+
+                // 位置：左右ゆらぎ（覚醒時は振幅↑）
+                const amp = this.enraged ? 260 : 220;
+                const vyA = this.enraged ? 0.52 : 0.45;
+                this.x = 480 + Math.sin(this.g.t * 0.55) * amp;
+                this.y = 140 + Math.cos(this.g.t * vyA) * 36;
+
+                // フェーズ推移
+                if (this.hp < this.maxHp * 0.6) this.phase = 1;
+                if (this.hp < this.maxHp * 0.3) this.phase = 2;
+
+                // 覚醒（1回だけ）：HP 15%未満で発動→小回復＋行動加速＋演出
+                if (!this.enraged && this.hp > 0 && this.hp <= Math.floor(this.maxHp * 0.15)) {
+                    this._enrage();
+                }
+
+                // アンチキャンプ検知（下部に居座ると蓄積）
+                if (this.g.player && this.g.player.y > this.g.h - 180) this.campT += dt; else this.campT = Math.max(0, this.campT - dt * 0.5);
+
+                // 行動間隔の動的スケーリング
+                let intv = this.intervalBase;
+                if (this.phase === 1) intv *= 0.90;
+                if (this.phase === 2) intv *= 0.80;
+                if (this.enraged) intv *= 0.60;
+
+                if (this.tAttack > intv) {
+                    this.tAttack = 0;
+                    // 技を選ぶ（アンチキャンプ時は優先技を強制）
+                    if (this.campT > 1.5) {
+                        this._usePrefer(['despairBands', 'holyPillar', 'judgmentCross']);
+                    } else {
+                        this._useRandom();
+                    }
+                }
+            }
+
+            // 覚醒処理
+            _enrage() {
+                this.enraged = true;
+                // 小回復＆演出
+                const heal = Math.floor(this.maxHp * 0.25);
+                this.hp = Math.min(this.hp + heal, this.maxHp);
+                this.g.callout('覚醒', CSS('--c-light'));
+                this.applyStatus('light', 60, '#fff');
+                // 覚醒リング演出
+                this.g.tele.ring(this.x, this.y, 120, '#ffffff', 600);
+                if (!this.g.lowPerf) this.g.vfx.burst(this.x, this.y, '#b7fffb', 36, 26, 2.2);
+            }
+
+            // 直前技の連打抑止つきランダム
+            _useRandom() {
+                const moves = [
+                    // 既存10
+                    'crossSlash', 'shieldWave', 'bladeFlash', 'parry', 'holyPillar',
+                    'despairBands', 'timeLeap', 'grave', 'echoes', 'finalResolve',
+                    // 新規5（★）
+                    'judgmentCross', 'smiteTrail', 'radiantCharge', 'bladeRainEx', 'shockwaveTrinity'
+                ];
+                // 重複回避：直前技をなるべく避ける（2回まで再抽選）
+                let pick = moves[randi(0, moves.length)];
+                for (let i = 0; i < 2 && pick === this.lastMove; i++) {
+                    pick = moves[randi(0, moves.length)];
+                }
+                this.lastMove = pick;
+                this[pick] && this[pick]();
+            }
+
+            // 優先技の中から選択（存在確認つき）
+            _usePrefer(cands) {
+                const filtered = cands.filter(n => typeof this[n] === 'function');
+                const pick = filtered[randi(0, filtered.length)];
+                this.lastMove = pick;
+                this[pick]();
+            }
+
+            // =======================
+            // 既存技（10手）
+            // =======================
+
+            // 1) 交差斬（X字）
+            crossSlash() {
+                this.g.callout('交差斬', CSS('--c-light'));
+                const w = 160, h = 10;
+                const p1 = new Projectile(this.g, this.x, this.y, { vx: 5.6, vy: 5.6, shape: 'rect', w: h, h: w, col: '#fff6b3', hostile: true, damage: 2.8, life: 100 });
+                const p2 = new Projectile(this.g, this.x, this.y, { vx: -5.6, vy: 5.6, shape: 'rect', w: h, h: w, col: '#fff6b3', hostile: true, damage: 2.8, life: 100 });
+                this.g.add(p1); this.g.add(p2);
+            }
+
+            // 2) 盾衝波（帯）
+            shieldWave() {
+                this.g.callout('盾衝波', CSS('--c-light'));
+                this.g.add(new Projectile(this.g, this.x, this.y, { vx: 0, vy: 6.2, shape: 'rect', w: 200, h: 14, col: '#d6fff4', hostile: true, damage: 3.2, life: 100 }));
+            }
+
+            // 3) 剣閃光（扇状ビーム列）
+            bladeFlash() {
+                this.g.callout('剣閃光', CSS('--c-light'));
+                const n = 8; for (let i = 0; i < n; i++) {
+                    const a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.22;
+                    this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 7.2, vy: Math.sin(a) * 7.2, r: 5, col: '#ffffff', hostile: true, damage: 1.6, trail: true }));
+                }
+            }
+
+            // 4) パリィ（反射）
+            parry() {
+                this.g.callout('パリィ', CSS('--c-light'));
+                this.parryWindow = (this.enraged ? 56 : 40); // 覚醒で少し長い
+                this.applyStatus('light', 20, '#fff');
+                this.g.tele.ring(this.x, this.y, 72, '#fff', 600);
+            }
+
+            // 5) 聖柱（上からの柱）
+            holyPillar() {
+                this.g.callout('聖柱', CSS('--c-light'));
+                for (let i = 0; i < 4; i++) {
+                    const x = rand(120, this.g.w - 120);
+                    this.g.tele.rect(x - 16, 0, 32, this.g.h, '#caffff', 500);
+                    setTimeout(() => { this.g.add(new Laser(this.g, x, 0, 32, this.g.h, '#caffff', 28, true)); }, 520);
+                }
+            }
+
+            // 6) 絶望波（左右帯）
+            despairBands() {
+                this.g.callout('絶望波', CSS('--c-light'));
+                const left = Math.random() < 0.5;
+                this.g.tele.rect(left ? 0 : this.g.w - 140, 180, 140, 200, '#eaffff', 600);
+                setTimeout(() => {
+                    const l = new Projectile(this.g, left ? 70 : this.g.w - 70, 280, { vx: 0, vy: 0, shape: 'rect', w: 140, h: 200, col: '#eaffff', hostile: true, damage: 3.4, life: 40 });
+                    this.g.add(l);
+                }, 620);
+            }
+
+            // 7) 時間跳躍（四隅ダッシュ→中心に抜け）
+            timeLeap() {
+                this.g.callout('時間跳躍', CSS('--c-light'));
+                const corners = [[80, 80], [this.g.w - 80, 80], [80, this.g.h - 200], [this.g.w - 80, this.g.h - 200]];
+                const [sx, sy] = corners[randi(0, corners.length)];
+                const p = new Projectile(this.g, sx, sy, { vx: (this.g.w / 2 - sx) / 20, vy: (this.g.h / 2 - sy) / 20, r: 12, col: '#ffffff', hostile: true, damage: 2.2, life: 40 });
+                this.g.add(p);
+            }
+
+            // 8) 墓標（剣群）
+            grave() {
+                this.g.callout('墓標', CSS('--c-light'));
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        const x = rand(80, this.g.w - 80);
+                        this.g.add(new Projectile(this.g, x, -20, { vx: 0, vy: 8.2, shape: 'rect', w: 12, h: 60, col: '#eaffff', hostile: true, damage: 2.2, life: 100 }));
+                    }, i * 90);
+                }
+            }
+
+            // 9) 残響（分身掃射）
+            echoes() {
+                this.g.callout('残響', CSS('--c-light'));
+                for (let i = 0; i < 3; i++) {
+                    const ax = rand(120, this.g.w - 120), ay = rand(80, 200);
+                    for (let k = 0; k < 10; k++) {
+                        setTimeout(() => {
+                            const a = Math.atan2(this.g.player.y - ay, this.g.player.x - ax) + rand(-0.1, 0.1);
+                            this.g.add(new Projectile(this.g, ax, ay, { vx: Math.cos(a) * 6.8, vy: Math.sin(a) * 6.8, r: 5, col: '#ffffff', hostile: true, damage: 1.4, trail: true }));
+                        }, k * 70 + i * 120);
+                    }
+                }
+            }
+
+            // 10) 最後の覚悟（大円）
+            finalResolve() {
+                this.g.callout('最後の覚悟', CSS('--c-light'));
+                this.g.tele.ring(this.x, this.y, 140, '#ffffff', 700);
+                setTimeout(() => {
+                    this.g.add(new Area(this.g, this.x, this.y, { r: 10, maxR: 180, col: 'rgba(255,255,255,.35)', core: '#ffffff', life: 46, hostile: true, damage: 5.2 }));
+                }, 720);
+            }
+
+            // =======================
+            // ★ 追加の新技（5手）
+            // =======================
+
+            // 11) 審判十字（Judgment Cross）— 縦柱＋横帯の十字掃討（プレイヤー位置に発生）
+            judgmentCross() {
+                this.g.callout('審判十字', CSS('--c-light'));
+                const px = this.g.player.x, py = this.g.player.y;
+                // テレグラフ
+                this.g.tele.rect(px - 18, 0, 36, this.g.h, '#ffffff', 560);
+                this.g.tele.rect(0, py - 12, this.g.w, 24, '#ffffff', 560);
+                // 発動
+                setTimeout(() => {
+                    this.g.add(new Laser(this.g, px, 0, 36, this.g.h, '#ffffff', 26, true)); // 縦
+                    // 横はProjectile矩形で代用
+                    this.g.add(new Projectile(this.g, this.g.w / 2, py, { vx: 0, vy: 0, shape: 'rect', w: this.g.w, h: 24, col: '#f7ffff', hostile: true, damage: 3.0, life: 34 }));
+                    if (!this.g.lowPerf) this.g.vfx.burst(px, py, '#eaffff', 16, 16, 1.6);
+                }, 580);
+            }
+
+            // 12) 追跡断罪（Smite Trail）— 一定間隔で足跡マーキング→時限爆
+            smiteTrail() {
+                this.g.callout('追跡断罪', CSS('--c-light'));
+                const marks = [];
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        marks.push({ x: this.g.player.x, y: this.g.player.y });
+                        const m = marks[marks.length - 1];
+                        this.g.tele.ring(m.x, m.y, 26, '#fff', 420);
+                    }, i * 150);
+                }
+                setTimeout(() => {
+                    marks.forEach((m, idx) => {
+                        setTimeout(() => {
+                            this.g.add(new Area(this.g, m.x, m.y, { r: 10, maxR: 120, col: 'rgba(255,255,255,.28)', core: '#fff', life: 32, hostile: true, damage: 2.8 }));
+                        }, idx * 90);
+                    });
+                }, 5 * 150 + 420);
+            }
+
+            // 13) 輝翼突進（Radiant Charge）— 横掃除×2連：狙い高さへ高速帯
+            radiantCharge() {
+                this.g.callout('輝翼突進', CSS('--c-light'));
+                const y1 = clamp(this.g.player.y, 160, this.g.h - 220);
+                const y2 = y1 + (Math.random() < 0.5 ? 100 : -100);
+                // テレグラフ（左右端から横帯）
+                [y1, y2].forEach((yy, idx) => {
+                    this.g.tele.rect(0, yy - 40, this.g.w, 80, '#eaffff', 520 + idx * 80);
+                    setTimeout(() => {
+                        const left = Math.random() < 0.5;
+                        const p = new Projectile(this.g, left ? -80 : this.g.w + 80, yy, {
+                            vx: left ? 9.2 : -9.2, vy: 0, shape: 'rect', w: 160, h: 80, col: '#eaffff', hostile: true, damage: 3.2, life: 120
+                        });
+                        this.g.add(p);
+                    }, 540 + idx * 80);
+                });
+            }
+
+            // 14) 剣雨・改（Blade Rain EX）— 高密度の剣雨＋時々狙い落下
+            bladeRainEx() {
+                this.g.callout('剣雨・改', CSS('--c-light'));
+                const cols = 18;
+                for (let i = 0; i < cols; i++) {
+                    setTimeout(() => {
+                        const x = (i + 0.5) * (this.g.w / cols);
+                        this.g.add(new Projectile(this.g, x, -24, { vx: 0, vy: 8.6, shape: 'rect', w: 12, h: 66, col: '#eaffff', hostile: true, damage: 2.2, life: 110 }));
+                    }, i * 60);
+                }
+                // 追い打ち：数本だけプレイヤー狙い
+                for (let k = 0; k < 5; k++) {
+                    setTimeout(() => {
+                        const px = this.g.player.x;
+                        this.g.add(new Projectile(this.g, px + rand(-40, 40), -24, { vx: 0, vy: 9.4, shape: 'rect', w: 12, h: 70, col: '#ffffff', hostile: true, damage: 2.6, life: 100 }));
+                    }, k * 120 + 300);
+                }
+            }
+
+            // 15) 三重衝波（Shockwave Trinity）— 同心円3連（内→中→外）
+            shockwaveTrinity() {
+                this.g.callout('三重衝波', CSS('--c-light'));
+                const radii = [80, 140, 200];
+                radii.forEach((R, i) => {
+                    this.g.tele.ring(this.x, this.y, R, '#ffffff', 520 + i * 120);
+                    setTimeout(() => {
+                        this.g.add(new Area(this.g, this.x, this.y, { r: 8, maxR: R + 20, col: 'rgba(255,255,255,.30)', core: '#ffffff', life: 30, hostile: true, damage: (i === 2 ? 4.0 : 3.0) }));
+                    }, 540 + i * 120);
+                });
+            }
+
+            // 反射（Parry）：playerSkill を受けた瞬間に弾き返す（覚醒時は弾数↑）
+            take(d) {
+                if (this.parryWindow > 0) {
+                    this.parryWindow = 0;
+                    const n = this.enraged ? 36 : 24;
+                    for (let i = 0; i < n; i++) {
+                        const a = i * TAU / n;
+                        this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 5.4, vy: Math.sin(a) * 5.4, r: 6, col: '#b7fffb', hostile: true, damage: 1.8, trail: true }));
+                    }
+                    if (!this.g.lowPerf) this.g.vfx.burst(this.x, this.y, '#b7fffb', n, 20, 2.2);
+                    return; // ダメージ無効化
+                }
+                super.take(d);
+            }
+        }
+        // ------------------------------
+        // 裏ボス #3：Bahamut（蒼炎と終焉の龍帝）
+        // ------------------------------
+        class Bahamut extends Boss {
+            constructor(g) {
+                super(g, 'Bahamut — 蒼炎と終焉の龍帝');
+                this.maxHp = 800; this.hp = this.maxHp;
+                this.color1 = CSS('--c-fire'); this.color2 = CSS('--c-th');
+                this.moveMode = 0; this.moveT = 0; this.moveDur = 3;
+            }
+            reset() { super.reset(); this.moveMode = 0; this.moveT = 0; }
+            upd(dt) {
+                super.upd(dt);
+                this.moveT += dt;
+                if (this.moveT > this.moveDur) {
+                    this.moveT = 0; this.moveMode = randi(0, 4);
+                }
+                switch (this.moveMode) {
+                    case 0: // 旋回飛行（八の字）
+                        this.x = 480 + Math.sin(this.g.t * 0.6) * 260;
+                        this.y = 160 + Math.sin(this.g.t * 1.2) * 60;
+                        break;
+                    case 1: // ジグザグ
+                        this.x = 480 + Math.sin(this.g.t * 1.3) * 300;
+                        this.y = 140 + Math.cos(this.g.t * 0.8) * 40;
+                        break;
+                    case 2: // 急降下→上昇
+                        this.x += ((this.g.player?.x || 480) - this.x) * 0.06;
+                        this.y += 520 * dt;
+                        if (this.y > this.g.h - 120) this.moveMode = 3;
+                        break;
+                    case 3: // 上昇復帰
+                        this.y -= 520 * dt;
+                        if (this.y <= 140) this.moveMode = 0;
+                        break;
+                    case 4: // 滞空チャージ
+                        this.x = 480 + Math.sin(this.g.t * 0.4) * 80;
+                        this.y = 160;
+                        break;
+                }
+                if (this.tAttack > 1.25) {
+                    this.tAttack = 0;
+                    const table = [this.flareBurst, this.lightningDive, this.megaFlare];
+                    table[randi(0, table.length)].call(this);
+                }
+                if (this.hp < this.maxHp * 0.6) this.phase = 1;
+                if (this.hp < this.maxHp * 0.3) this.phase = 2;
+            }
+
+            // フレアバースト：扇状炎弾
+            flareBurst() {
+                this.g.callout('フレアバースト', CSS('--c-fire'));
+                const n = 36;
+                for (let i = 0; i < n; i++) {
+                    const a = -TAU / 4 + i * TAU / (n * 1.5);
+                    const sp = rand(3.8, 5.0);
+                    this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 7, col: '#ff7a3c', hostile: true, damage: 2.0, trail: true }));
+                }
+            }
+
+            // ライトニングダイブ：縦雷柱
+            lightningDive() {
+                this.g.callout('ライトニングダイブ', CSS('--c-th'));
+                const px = this.g.player ? this.g.player.x : this.x;
+                this.g.tele.rect(px - 20, -20, 40, this.g.h + 40, '#bdf', 600);
+                setTimeout(() => {
+                    for (let i = 0; i < 5; i++) {
+                        const y = -40 - i * 80;
+                        this.g.add(new Projectile(this.g, px, y, { vx: 0, vy: 11, r: 18, col: '#bdf', hostile: true, damage: 3.2, life: 120 }));
+                    }
+                }, 620);
+            }
+
+            // メガフレア：全方位レーザー
+            megaFlare() {
+                this.g.callout('メガフレア', CSS('--c-th'));
+                const dirs = 8;
+                for (let i = 0; i < dirs; i++) {
+                    const a = i * TAU / dirs;
+                    const x = this.x + Math.cos(a) * 80;
+                    const y = this.y + Math.sin(a) * 80;
+                    this.g.tele.ring(x, y, 30, '#ffe56b', 700);
+                    setTimeout(() => {
+                        this.g.add(new Projectile(this.g, x, y, { vx: Math.cos(a) * 8, vy: Math.sin(a) * 8, r: 14, col: '#ffe56b', hostile: true, damage: 4.0, life: 180 }));
+                    }, 720);
+                }
+            }
+        }
+
+
+        // -------- シークレットキャンペーン構築＆ボタン配線 --------
+        (function secretCampaign() {
+            function attach() {
+                game.secret.push(Pierrot, FallenHero);
+                try {
+                    if (localStorage.getItem('elem_ultra_bahamut') === '1') game.secr
+                    et.push(Bahamut);
+                } catch (e) { }
+                const btn = document.getElementById('btnSecret');
+                if (btn) {
+                    btn.addEventListener('click', () => game.startSecret());
+                    try {
+                        const sec = localStorage.getItem('elem_ultra_secret') === '1';
+                        const b = localStorage.getItem('elem_ultra_bahamut') === '1';
+                        btn.style.display = (sec || b) ? 'inline-block' : 'none';
+                    } catch (e) { }
+                }
+            }
+            if (window.game) attach();
+            else window.addEventListener('load', () => { if (window.game) attach(); });
+        })();
+
+        // -------- 追加：被弾ヒットストップ風＆ヒットスパーク強化 --------
+        (function hitFeel() {
+            const _take = Player.prototype.take;
+            Player.prototype.take = function (dmg) {
+                _take.call(this, dmg);
+                // 微ヒットストップ風（描画時間は止めず、入力と移動のみ0.08s弱め）
+                const oldSpd = this.spd; this.spd *= 0.55;
+                setTimeout(() => { this.spd = oldSpd; }, 80);
+            };
+        })();
+
+        // -------- セーフガード：終了時に RNG 戻す（任意） --------
+        (function rngGuard() {
+            const _victory = Game.prototype.victory;
+            Game.prototype.victory = function () { try { RNG.disable(); } catch (e) { } _victory.call(this); };
+            const _defeat = Game.prototype.defeat;
+            Game.prototype.defeat = function () { try { RNG.disable(); } catch (e) { } _defeat.call(this); };
+        })();
+
+    </script>
+    <script>
+        /* ========= Speed Reset Skill（Rキー／UIボタン） =========
+           使い方：この <script> を </body> の直前にそのまま貼るだけ。
+           - Player.baseSpd を自動セット（初回のみ）
+           - Rキー または 右下HUDの「速度リセット(R)」ボタンで即リセット
+           - 演出：小さな加速(1.15x)を0.25秒だけ付与→自動で等速へ
+           - 既存のヒットストップ等の一時減速より“強制的に優先”されます
+        ========================================================= */
+        (function speedResetSkill() {
+            // 安全に game / player 取得（ロード順に左右されないように）
+            function ready(fn) {
+                if (document.readyState !== 'loading') fn();
+                else document.addEventListener('DOMContentLoaded', fn);
+            }
+            ready(function () {
+                if (!window.game || !game.player) return;
+
+                const p = game.player;
+
+                // 基準速度を記録（初回のみ）
+                if (typeof p.baseSpd !== 'number' || !isFinite(p.baseSpd)) {
+                    p.baseSpd = p.spd || 260;
+                }
+
+                // リセットの“優先権”を保証するためのトークン
+                // これが更新された後に発火する古い setTimeout は無視されます
+                p._spdResetToken = 0;
+
+                // 強制速度リセット本体
+                p.resetSpeedNow = function () {
+                    this._spdResetToken = (this._spdResetToken | 0) + 1;
+                    const token = this._spdResetToken;
+
+                    // 即リセット
+                    this.spd = this.baseSpd;
+
+                    // 演出：微加速 1.15x を 250ms だけ
+                    const boosted = this.baseSpd * 1.15;
+                    this.spd = boosted;
+
+                    // 白いパーティクル少々
+                    if (!this.g.lowPerf) {
+                        for (let i = 0; i < 16; i++) {
+                            this.g.vfx.spawn(this.x + (Math.random() * 24 - 12), this.y + (Math.random() * 24 - 12),
+                                '#ffffff', 28, 2, (Math.random() * 2 - 1) * 1.2, (Math.random() * 2 - 1) * 1.2);
+                        }
+                    }
+                    this.g.tele.ring(this.x, this.y, 48, '#fff', 240);
+                    this.g.sound && this.g.sound.cast && this.g.sound.cast();
+
+                    // 0.25秒後に等速へ（途中で別のリセットが来たら無視）
+                    setTimeout(() => {
+                        if ((this._spdResetToken | 0) === token) {
+                            this.spd = this.baseSpd;
+                        }
+                    }, 250);
+                };
+
+                // --- キーバインド（R） ---
+                window.addEventListener('keydown', function (ev) {
+                    if (!game || game.state !== 'play') return;
+                    if (ev.key === 'r' || ev.key === 'R') {
+                        game.player && game.player.resetSpeedNow();
+                    }
+                });
+
+                // --- HUDにボタンを追加（右下HPバー脇のトグル群の隣） ---
+                (function injectButton() {
+                    const hpHud = document.querySelector('.hp-hud');
+                    if (!hpHud) return;
+                    const btn = document.createElement('div');
+                    btn.className = 'toggle';
+                    btn.id = 'btnSpeedReset';
+                    btn.textContent = '速度リセット (R)';
+                    btn.title = 'Rキーでも発動できます';
+                    btn.style.fontWeight = '700';
+                    btn.style.borderColor = 'var(--c-light)';
+                    btn.style.color = 'var(--ink)';
+                    btn.style.boxShadow = '0 0 0 0 rgba(255,255,255,0)';
+                    btn.addEventListener('click', () => { game.player && game.player.resetSpeedNow(); });
+                    hpHud.appendChild(btn);
+                })();
+
+                // --- 既存の「被弾ヒットストップ」が戻し値を上書きしないよう軽いセーフガード ---
+                // 既存の Player.take を巻き直して、古い復帰タイマーは resetSpeedNow の後なら無視させます
+                const _take = Player.prototype.take;
+                if (!_take.__wrappedForReset) {
+                    Player.prototype.take = function (dmg) {
+                        const preToken = (this._spdResetToken | 0);
+                        _take.call(this, dmg);
+                        // ここから80ms以内に既存の復帰処理が走っても、
+                        // resetSpeedNow() が押されていたら（token変化）上書きしない
+                        const self = this;
+                        setTimeout(() => { /* noop: フック点。既存処理との干渉防止のためのダミー */ }, 0);
+                        // マーク
+                        Player.prototype.take.__wrappedForReset = true;
+                    };
+                }
+
+                // --- メニュー復帰時にリセット押し忘れでも等速になるよう、開始時に必ず等速へ ---
+                const _start = Game.prototype.startCampaign;
+                Game.prototype.startCampaign = function () {
+                    _start.apply(this, arguments);
+                    try {
+                        this.player.baseSpd = this.player.baseSpd || this.player.spd || 260;
+                        this.player.spd = this.player.baseSpd;
+                        this.player._spdResetToken = (this.player._spdResetToken | 0) + 1;
+                    } catch (e) { }
+                };
+                const _startSecret = Game.prototype.startSecret;
+                if (_startSecret) {
+                    Game.prototype.startSecret = function () {
+                        _startSecret.apply(this, arguments);
+                        try {
+                            this.player.baseSpd = this.player.baseSpd || this.player.spd || 260;
+                            this.player.spd = this.player.baseSpd;
+                            this.player._spdResetToken = (this.player._spdResetToken | 0) + 1;
+                        } catch (e) { }
+                    };
+                }
+
+            });
+        })();
+    </script>
+    <script>
+        /* ===== Balance Patch: EARTH / ATOM Overkill Fix =====
+           そのまま </body> の直前に貼るだけで有効
+        ===================================================== */
+        (function balancePatch() {
+            if (!window.game) return;
+
+            /***********************
+             * 1) AreaのDPSインターバル化
+             *    - Area(円範囲)の当たり判定は毎フレーム→「nフレ毎」に制限
+             *    - デフォ 10f。各スキルが e._dpsInterval を設定すれば上書き可能
+             ***********************/
+            const _hitEntityBoss = Game.prototype.hitEntityBoss;
+            const _checkCollisions = Game.prototype.checkCollisions;
+            Game.prototype.checkCollisions = function () {
+                const p = this.player, b = this.boss;
+                // 先にプレイヤー被弾は既存通り
+                for (const e of this.entities) {
+                    if (!e) continue;
+                    if (e.hostile && this.hitEntityPlayer(e, p)) {
+                        p.take(e.damage || 1);
+                        if (e.onHit) e.onHit();
+                        if (!(e instanceof Laser) && !(e instanceof Area)) e.dead = true;
+                    }
+                }
+                // ボス被弾：AreaはDPS間引き
+                if (b && !b.dead) {
+                    for (const e of this.entities) {
+                        if (!e || !e.playerSkill) continue;
+                        if (!this.hitEntityBoss(e, b)) continue;
+
+                        if (e instanceof Area) {
+                            // ★ここで間引く：_dpsInterval（既定10f）ごと
+                            const step = e._dpsInterval || 10;
+                            e._dpsTick = (e._dpsTick || 0) - 1;
+                            if (e._dpsTick <= 0) {
+                                b.take(e.damage || 1);
+                                if (e.onHit) e.onHit(b);
+                                e._dpsTick = step;
+                            }
+                            // Areaは継続なので dead にしない
+                        } else {
+                            b.take(e.damage || 1);
+                            if (e.onHit) e.onHit(b);
+                            if (e.pierce && e.pierce > 0) e.pierce--;
+                            else if (!(e instanceof Laser)) e.dead = true;
+                        }
+                    }
+                }
+            };
+
+            /***********************
+             * 2) EARTHの威力緩和＋連打軽減
+             *    - ダメージ係数ダウン
+             *    - 600ms以内の連続設置は2発目以降 60% に減衰
+             ***********************/
+            const SM = SkillManager.prototype;
+            // cast後のデフォCDはそのまま。威力だけ下げ、連打軽減を入れる
+            const _earth = SM._earth;
+            SM._earth = function () {
+                const lvl = this.list.earth.lvl;
+                const boss = this.g.boss; if (!boss) return;
+                // 連打軽減：600ms内の2発目以降は威力0.6倍
+                const now = performance.now();
+                if (!this._earthLast) this._earthLast = 0;
+                const chainPenalty = (now - this._earthLast < 600) ? 0.6 : 1.0;
+                this._earthLast = now;
+
+                const count = 1 + lvl;
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        const dmg = (1.6 + 0.6 * lvl) * chainPenalty; // 旧: 3 + lvl → 緩和
+                        const a = new Area(this.g, boss.x + (Math.random() * 60 - 30), boss.y + 20, {
+                            r: 6,
+                            maxR: 60 + lvl * 12,
+                            col: 'rgba(164,102,75,.30)',
+                            core: getComputedStyle(document.documentElement).getPropertyValue('--c-earth-2').trim(),
+                            life: 34,
+                            playerSkill: true,
+                            damage: dmg
+                        });
+                        // ★DPS間引き（EARTHはゆっくり：12f毎）
+                        a._dpsInterval = 12;
+                        this.g.add(a);
+                        if (!this.g.lowPerf) this.g.vfx.burst(a.x, a.y, getComputedStyle(document.documentElement).getPropertyValue('--c-earth-2').trim(), 8, 18, 2);
+                    }, i * 120);
+                }
+            };
+
+            /***********************
+             * 3) ATOM：同時1個制限＋クールダウン延長
+             *    - 既に展開中なら発動しない（CDも消費しない）
+             *    - CDを 28s → 38s に延長（必要なら調整OK）
+             *    - DPS間引きは 10f 毎（既定）
+             ***********************/
+            // CD延長（UIにも反映したいので定義を上書き）
+            const _buildUI = SM._buildUI;
+            SM._buildUI = function () {
+                _buildUI.call(this);
+                // 初期化後にCDテーブルを書き換え
+                if (this.list && this.list.atom) {
+                    this.list.atom.max = 38.0;  // 旧 28.0 → 38.0
+                    // リング更新
+                    this._drawRing && this._drawRing(this.list.atom);
+                }
+            };
+
+            // 併発禁止フラグ
+            SM._atomActive = false;
+
+            const _atom = SM._atom;
+            SM._atom = function () {
+                if (SM._atomActive) {
+                    // 既に展開中 → 不発（CD消費しないよう、直前に増えたCDを戻す）
+                    const s = this.list.atom; if (s) { s.cd = 0; this._drawRing && this._drawRing(s); }
+                    // 軽く効果音だけ
+                    this.g.sound && this.g.sound.cast && this.g.sound.cast();
+                    this.g.callout('ATOMは展開中', getComputedStyle(document.documentElement).getPropertyValue('--c-atom').trim());
+                    return;
+                }
+                // 通常発動：元の処理を借りつつ、生成物にタグ付けして管理
+                const lvl = this.list.atom.lvl;
+                const r = 80 + lvl * 20;
+                const dmg = 5 + lvl * 2;          // 旧 6 + lvl*2 → やや緩和
+                const pull = 0.40 + lvl * 0.25;   // 吸引はそのまま寄せ気味
+                const s = new Area(this.g, this.o.x, this.o.y - 40, {
+                    r: 10, maxR: r,
+                    col: 'rgba(255,76,255,.5)',
+                    core: '#ffffff',
+                    life: 60,
+                    playerSkill: true,
+                    damage: dmg
+                });
+                s._dpsInterval = 3; // 10f毎にDPS
+                s._isAtomCore = true;
+                s.upd = (dt) => { this.g.entitiesPull(s.x, s.y, pull, false); Area.prototype.upd.call(s, dt); };
+
+                SM._atomActive = true;
+                this.g.add(s);
+
+                // 終了でフラグ解除（life 60f ≒ 1秒弱）
+                setTimeout(() => { SM._atomActive = false; }, 1000);
+            };
+
+            /***********************
+             * 4) （任意）すでに読み込んでいたUIのCDを即反映
+             ***********************/
+            const tryApplyAtomCD = () => {
+                try {
+                    if (game && game.player && game.player.skills && game.player.skills.list?.atom) {
+                        game.player.skills.list.atom.max = 38.0;
+                    }
+                } catch (e) { }
+            };
+            tryApplyAtomCD();
+
+        })();
+    </script>
+    <script>
+        /* =========================================================
+           1) スキルLvを維持したまま startSecret() へ入れるように上書き
+           - いまの周回の各スキルLvをスナップショット
+           - 既存 startSecret() 実行（内部で reset されLv=0になる）
+           - 直後にLv復元＆CD=0にしてリング更新
+           ========================================================= */
+        (function carryAugmentsToSecret() {
+            if (!Game || !Game.prototype.startSecret) {
+                window.addEventListener('load', carryAugmentsToSecret, { once: true });
+                return;
+            }
+            const _startSecret = Game.prototype.startSecret;
+            Game.prototype.startSecret = function () {
+                const keepLv = {};
+                if (this.player?.skills?.list) {
+                    for (const id in this.player.skills.list) keepLv[id] = (this.player.skills.list[id]?.lvl | 0);
+                }
+                _startSecret.call(this);
+                if (this.player?.skills?.list) {
+                    for (const id in keepLv) {
+                        if (this.player.skills.list[id]) {
+                            this.player.skills.list[id].lvl = keepLv[id];
+                            this.player.skills.list[id].cd = 0;
+                        }
+                    }
+                    this.player.skills.tick(0);
+                }
+            };
+        })();
+
+        /* =========================================================
+           2) Cosmos撃破後のフローを拡張
+           - これまで：victory() → 完了画面
+           - これから：victory() 時に「裏ボスへ？」ダイアログを表示
+             ・OK → そのまま裏ボスキャンペーンへ（Lv維持）
+             ・終了 → 従来どおりVICTORY画面
+           ========================================================= */
+        (function secretPromptAfterVictory() {
+            if (!Game || !Game.prototype.victory) {
+                window.addEventListener('load', secretPromptAfterVictory, { once: true });
+                return;
+            }
+            // ダイアログDOMを1回だけ作る
+            const root = document.getElementById('game') || document.body;
+            const ov = document.createElement('div');
+            ov.className = 'menu';
+            ov.id = 'afterCosmos';
+            ov.innerHTML = `
+    <div class="title">原初撃破！</div>
+    <div style="opacity:.85;margin-bottom:6px">裏ボス（Pierrot / Fallen Hero）に挑戦しますか？</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="goSecret">裏ボスへ</button>
+      <button class="btn" id="endRun">終了する</button>
+    </div>`;
+            root.appendChild(ov);
+
+            const _victory = Game.prototype.victory;
+            Game.prototype.victory = function () {
+                // すでに裏キャンペーン中は通常の勝利でOK
+                if (this._isSecretRun) return _victory.call(this);
+
+                // Cosmos撃破で裏が解禁済みかを確認（Part2のonDefeatで保存）
+                let unlocked = false;
+                try { unlocked = (localStorage.getItem('elem_ultra_secret') === '1'); } catch (e) { }
+                if (!unlocked) return _victory.call(this);
+
+                // メニューは隠しつつ、自前の選択ダイアログを出す
+                this.state = 'menu';
+                if (this.$menu) this.$menu.classList.remove('show');
+                ov.classList.add('show');
+
+                // ボタン配線（毎回上書きでもOK）
+                ov.querySelector('#goSecret').onclick = () => {
+                    ov.classList.remove('show');
+                    // そのまま裏ボスキャンペーンへ（Lvは上の carry パッチで維持される）
+                    this.startSecret();
+                };
+                ov.querySelector('#endRun').onclick = () => {
+                    ov.classList.remove('show');
+                    _victory.call(this); // 従来のVICTORY画面へ
+                };
+            };
+        })();
+    </script>
+    <script>
+        // ===============================
+        // Boss Select / Practice Mode Patch (robust)
+        // ===============================
+        (function injectBossSelectRobust() {
+
+            // ---- 0) ユーティリティ：準備完了を待つ ----
+            function waitReady(check, cb, tries = 60, interval = 33) {
+                if (check()) return cb();
+                let count = 0;
+                const timer = setInterval(() => {
+                    if (check() || ++count >= tries) {
+                        clearInterval(timer);
+                        cb();
+                    }
+                }, interval);
+            }
+
+            // ---- 1) ボス名とクラスの収集 ----
+            function collectBosses() {
+                const reg = [];
+
+                // 1-1) 既知クラス（存在するもののみ）
+                const known = [
+                    ['Ignis', 'Ignis（火）'],
+                    ['Aqua', 'Aqua（水）'],
+                    ['Ventus', 'Ventus（風）'],
+                    ['Terra', 'Terra（土）'],
+                    ['Cosmos', 'Cosmos（原初）'],
+                    ['Pierrot', 'Pierrot（道化／裏）'],
+                    ['FallenHero', 'Fallen Hero（朽ちた勇者／裏）'],
+                    ['Bahamut', 'Bahamut（蒼炎と終焉の龍帝／裏）'],
+                    // 追加ボスがあればここに ['ClassName','表示名'] を追記
+                ];
+                known.forEach(([n, label]) => {
+                    const C = window[n];
+                    if (typeof C === 'function') reg.push({ label, Cls: C, name: n });
+                });
+
+                // 1-2) さらに game.campaign / game.secret から動的に拾う
+                try {
+                    if (window.game) {
+                        const pushFrom = (arr, note = '') => {
+                            (arr || []).forEach(C => {
+                                if (typeof C !== 'function') return;
+                                const name = C.name || '(anon)';
+                                if (!reg.some(r => r.Cls === C)) {
+                                    reg.push({ label: name + note, Cls: C, name });
+                                }
+                            });
+                        };
+                        pushFrom(game.campaign, '');
+                        // 裏解禁済みのときだけ secret も表示
+                        const unlocked = localStorage.getItem('elem_ultra_secret') === '1';
+                        if (unlocked) pushFrom(game.secret, '（裏）');
+                    }
+                } catch (e) { }
+
+                // 1-3) 重複排除
+                const uniq = [];
+                reg.forEach(r => { if (!uniq.some(u => u.Cls === r.Cls)) uniq.push(r); });
+                return uniq;
+            }
+
+            // ---- 2) パネルの生成 ----
+            function buildPanel() {
+                const menu = document.getElementById('menu');
+                if (!menu) return;
+
+                // 既に作っていれば再生成せず、選択肢だけ更新
+                let panel = document.getElementById('bossSelectPanel');
+                if (!panel) {
+                    panel = document.createElement('div');
+                    panel.id = 'bossSelectPanel';
+                    panel.style.cssText = 'background:#0b0e2a;border:2px solid var(--line);padding:10px;margin-top:8px;display:grid;gap:8px;justify-items:center';
+                    panel.innerHTML = `
+        <div style="font-family:Orbitron;font-weight:900;letter-spacing:.5px">BOSS SELECT / PRACTICE</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center">
+          <select id="bossSelect" style="min-width:220px;background:#0f1236;color:#e5e7ff;border:1px solid #3a3e74;padding:6px"></select>
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="keepUpg" checked> 強化保持</label>
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="infHP"> 無限HP</label>
+          <button class="btn" id="btnPractice" style="padding:8px 12px">練習を開始</button>
+        </div>
+        <div style="opacity:.65;font-size:12px;text-align:center">
+          ・強化保持: キャンペーンで取ったスキルLvを持ち越し／OFFでLv0＆全CD0<br>
+          ・無限HP: プレイヤーのHPが減らない（被弾演出のみ）
+        </div>`;
+                    menu.appendChild(panel);
+                }
+
+                const sel = panel.querySelector('#bossSelect');
+                sel.innerHTML = ''; // まず空に
+
+                const reg = collectBosses();
+                if (reg.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.textContent = '（ボスが見つかりません。読み込み待ち…）';
+                    sel.appendChild(opt);
+                } else {
+                    reg.forEach((r, i) => {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = r.label;
+                        sel.appendChild(opt);
+                    });
+                    sel.value = '0';
+                }
+
+                // startSingle を1回だけ生やす
+                if (!Game.prototype.startSingle) {
+                    Game.prototype.startSingle = function (BossClass, opts = {}) {
+                        // 難易度とシードを適用（既存UI互換）
+                        try {
+                            const dif = localStorage.getItem('elem_ultra_dif') || 'N';
+                            this.setDifficulty && this.setDifficulty(dif);
+                        } catch (e) { }
+                        const seedEl = document.getElementById('seedInput');
+                        if (seedEl) {
+                            const v = seedEl.value.trim();
+                            try { (v ? RNG.enable(v) : RNG.disable()); } catch (e) { }
+                        }
+
+                        // 練習フラグとバックアップ
+                        this._practiceBackup = { campaign: this.campaign.slice(), stage: this.stage, secret: this._isSecretRun };
+                        this._isPractice = true;
+                        this.practiceInfHP = !!opts.infHP;
+
+                        // キャンペーン差し替え
+                        this.campaign = [BossClass];
+                        this.stage = 0;
+
+                        // 強化保持OFFならリセット
+                        if (!opts.keepUpgrades && this.player && this.player.skills) {
+                            for (const k in this.player.skills.list) {
+                                const s = this.player.skills.list[k]; s.lvl = 0; s.cd = 0;
+                            }
+                        }
+
+                        // 無限HPパッチ（1度だけ）
+                        if (!Player.prototype._practiceWrapped) {
+                            const _take = Player.prototype.take;
+                            Player.prototype.take = function (dmg) {
+                                if (this.g && this.g.practiceInfHP) {
+                                    this.g.sound.hurt();
+                                    this.g.vfx.burst(this.x, this.y, '#ff4966', this.g.lowPerf ? 6 : 14, 18, 3);
+                                    this.ifr = Math.max(this.ifr, 0.6);
+                                    return;
+                                }
+                                _take.call(this, dmg);
+                            };
+                            Player.prototype._practiceWrapped = true;
+                        }
+
+                        // 開始
+                        this.state = 'play';
+                        this.player.reset();
+                        this.entities.length = 0;
+                        this.$menu.classList.remove('show');
+                        this.spawnBoss();
+                    };
+
+                    // 勝敗で復元
+                    const _vict = Game.prototype.victory;
+                    Game.prototype.victory = function () {
+                        if (this._isPractice) restoreCampaign(this);
+                        _vict.call(this);
+                    };
+                    const _def = Game.prototype.defeat;
+                    Game.prototype.defeat = function () {
+                        if (this._isPractice) restoreCampaign(this);
+                        _def.call(this);
+                    };
+                    function restoreCampaign(g) {
+                        g.campaign = g._practiceBackup?.campaign || g.campaign;
+                        g.stage = g._practiceBackup?.stage ?? 0;
+                        g._isSecretRun = !!g._practiceBackup?.secret;
+                        g.practiceInfHP = false;
+                        g._isPractice = false;
+                        g._practiceBackup = null;
+                    }
+                }
+
+                // ボタン
+                const btn = panel.querySelector('#btnPractice');
+                btn.onclick = () => {
+                    const reg2 = collectBosses();
+                    const idx = parseInt(sel.value || '0', 10);
+                    const rec = reg2[idx];
+                    if (!rec) return;
+                    const keepUpg = panel.querySelector('#keepUpg').checked;
+                    const infHP = panel.querySelector('#infHP').checked;
+                    game.startSingle(rec.Cls, { keepUpgrades: keepUpg, infHP });
+                };
+            }
+
+            // ---- 3) 実行：読み込み完了→ボス定義を待ってから構築 ----
+            function run() {
+                waitReady(
+                    // 条件：game が居て、代表的なボス定義または campaign が存在
+                    () => !!window.game && (typeof window.Ignis === 'function' || (game.campaign && game.campaign.length)),
+                    () => {
+                        buildPanel();          // まず一度作る
+                        // さらに 1 秒後にもう一度リストを更新（遅延読み込み対策）
+                        setTimeout(buildPanel, 1000);
+                    }
+                );
+            }
+
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(run, 0);
+            } else {
+                window.addEventListener('DOMContentLoaded', run);
+            }
+        })();
+    </script>
+    <script>
+        // === Time Stop Core (hostiles & boss freeze, playerは動く) ===
+        (function patchTimeStop() {
+            // フラグと残り時間(s)
+            Game.prototype.timeStopT = 0;
+            Game.prototype.isTimeStopped = function () { return this.timeStopT > 0; };
+            Game.prototype.timeStop = function (sec = 10) {
+                this.timeStopT = Math.max(this.timeStopT, sec);
+                this.callout && this.callout('時間停止', getComputedStyle(document.documentElement).getPropertyValue('--c-th').trim() || '#fff');
+            };
+
+            // ループをパッチ：停止中はbossと敵性Entityを更新しない（lifeも減らない）
+            const _loop = Game.prototype.loop;
+            Game.prototype.loop = function (ts) {
+                _loop.call(this, ts); // 既存の描画等はそのまま
+                // 上の呼び出しの中で this.dt/this.entities/boss を触っているので、
+                // ここで「次フレーム用に」停止処理を噛ませる
+            };
+
+            // 既存の _loop 内部を書き換えずに、敵側のupdだけ止めるための小細工
+            // → entities と boss の upd をフック
+            // 1) Entity.upd をラップ（hostileのみ停止）
+            const _e_upd = Entity.prototype.upd;
+            Entity.prototype.upd = function (dt) {
+                // Area/Laser/Projectile 等すべてここを通る
+                if (this.g && this.g.isTimeStopped && this.g.isTimeStopped()) {
+                    // playerSkill は動かす（味方側は動く）、敵性だけ止める
+                    if (this.hostile) return;
+                }
+                return _e_upd.call(this, dt);
+            };
+
+            // 2) Boss.upd をラップ（ボスは完全停止。ただし描画は止めない）
+            const _b_upd = Boss.prototype.upd;
+            Boss.prototype.upd = function (dt) {
+                if (this.g && this.g.isTimeStopped && this.g.isTimeStopped()) {
+                    return; // 何もしない＝tAttackやDoT tickも止まる
+                }
+                return _b_upd.call(this, dt);
+            };
+
+            // 3) タイマーの減衰
+            const _g_loop = Game.prototype.loop;
+            Game.prototype.loop = function (ts) {
+                // 元の処理
+                this.dt = ((ts - this.last) || 16) / 1000; if (this.dt > 0.033) this.dt = 0.016; this.last = ts; this.t += this.dt;
+
+                if (this.state === 'play') {
+                    // player と描画系は普通に進める
+                    this.player.upd(this.dt);
+
+                    // boss（停止中はupdスキップ）
+                    if (this.boss) {
+                        if (!this.isTimeStopped()) this.boss.upd(this.dt);
+                        if (this.boss.dead) { this.boss = null; setTimeout(() => this.next(), 700); }
+                    }
+
+                    // entity（停止中はhostileのみ止まる：上の Entity.upd フックが効く）
+                    for (let i = 0; i < this.entities.length; i++) this.entities[i].upd(this.dt);
+                    this.entities = this._compact ? (function compact(arr) { let i = 0, n = arr.length; while (i < n) { if (arr[i] && !arr[i].dead) { i++; continue; } arr[i] = arr[n - 1]; arr.pop(); n--; } return arr; })(this.entities) : this.entities.filter(e => !e.dead);
+
+                    this.checkCollisions();
+                    this.player.skills.tick(this.dt);
+                    this.vfx.upd();
+
+                    // render
+                    const ctx = this.ctx; ctx.clearRect(0, 0, this.w, this.h);
+                    ctx.fillStyle = this.lowPerf ? '#0f1130' : '#101230'; ctx.fillRect(0, 0, this.w, this.h);
+                    if (this.boss) this.boss.draw(ctx);
+                    for (let i = 0; i < this.entities.length; i++) this.entities[i].draw(ctx);
+                    this.vfx.draw(ctx);
+                    this.player.draw(ctx);
+                    this.updateUI();
+                }
+
+                // 時間停止の残りを減らす
+                if (this.timeStopT > 0) this.timeStopT -= this.dt;
+                requestAnimationFrame((t) => this.loop(t));
+            };
+        })();
+    </script>
+    <script>
+        // === Thunderを時間停止スキルに置き換え ===
+        (function patchThunderToTimeStop() {
+            // CD（max）を25sに
+            const _def = SkillManager.prototype._default;
+            SkillManager.prototype._default = function (id) {
+                const v = _def.call(this, id);
+                if (id === 'thunder') { v.max = 25.0; } // クールダウン上限
+                return v;
+            };
+
+            // _thunder() を差し替え
+            SkillManager.prototype._thunder = function () {
+                const lvl = this.list.thunder.lvl;
+                const dur = 3 + 0; // ベース10秒（Lvで伸ばしたいなら +lvl*? で）
+                this.g.timeStop(dur);
+                // ちょっとした演出
+                if (!this.g.lowPerf) {
+                    for (let i = 0; i < 36; i++) {
+                        this.g.vfx.spawn(this.o.x + (Math.cos(i * 0.174) * 80), this.o.y + (Math.sin(i * 0.174) * 80),
+                            getComputedStyle(document.documentElement).getPropertyValue('--c-th-2').trim() || '#fffaa3',
+                            36, 2, 0, -0.4);
+                    }
+                }
+            };
+        })();
+    </script>
+    <script>
+        /* =========================================================
+           Satan — 深淵の支配者（超拡張・高安定・滑らか挙動 完全版）
+           依存: Boss / Projectile / Area / Laser / Telegraph / VFX / RNG
+           追加安定化:
+           - Player.applyKnockback のポリフィル＋Player.updへ滑らかKB統合
+           - Game.shake / Game.showSpeedBadge ポリフィル
+           - 安全タイムアウト / TTLガード / 参照防御 / NaN時刻フォールバック
+           - 例外起因の停止を極力抑止（防御的ガード）
+        ========================================================= */
+        (function () {
+            // -------- 色ヘルパ --------
+            const cssv = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+            const C_DARK = () => cssv('--c-dark') || '#7b4cff';
+            const C_DARK2 = () => cssv('--c-dark-2') || '#b39aff';
+            const C_FIRE = () => cssv('--c-fire') || '#ff5a3c';
+            const C_FIRE2 = () => cssv('--c-fire-2') || '#ff9a47';
+            const C_TH = () => cssv('--c-th') || '#f6ff52';
+            const C_TH2 = () => cssv('--c-th-2') || '#fffaa3';
+            const C_WATER = () => cssv('--c-water') || '#4aa3ff';
+
+            // -------- 安全タイムアウト --------
+            function safeTimeout(g, boss, fn, delay, bucket) {
+                const id = setTimeout(() => {
+                    try {
+                        if (!g || g.state !== 'play') return;
+                        if (!boss || boss.dead) return;
+                        fn && fn();
+                    } catch (e) { /* swallow */ }
+                }, delay | 0);
+                bucket && bucket.push(id);
+                return id;
+            }
+            function clearTimers(arr) { if (!arr) return; for (const id of arr) clearTimeout(id); arr.length = 0; }
+
+            // -------- Game ポリフィル --------
+            (function gamePolyfills() {
+                if (!Game.prototype.shake) {
+                    Game.prototype.cam = { x: 0, y: 0, t: 0, pow: 0, dur: 0 };
+                    Game.prototype.shake = function (power = 1, dur = 0.3) { this.cam.pow = power; this.cam.dur = dur; this.cam.t = dur; };
+                    const _loop = Game.prototype.loop;
+                    Game.prototype.loop = function (ts) {
+                        _loop.call(this, ts);
+                        if (this.cam && this.cam.t > 0) {
+                            this.cam.t -= this.dt;
+                            if (!this.lowPerf && Math.random() < 0.2) {
+                                try { this.vfx.spawn(this.w * 0.5 + (Math.random() - 0.5) * 6, 80 + (Math.random() - 0.5) * 6, '#ffffff', 14, 2, 0, -0.4); } catch (e) { }
+                            }
+                        }
+                    };
+                }
+                if (!Game.prototype.showSpeedBadge) {
+                    Game.prototype.showSpeedBadge = function (text, color = '#ffd34d') {
+                        let el = document.getElementById('speedBadge');
+                        if (!el) {
+                            el = document.createElement('div');
+                            el.id = 'speedBadge';
+                            el.style.cssText = 'position:absolute;top:44px;right:16px;font-family:Orbitron;font-weight:900;background:#0b0e2a;border:2px solid var(--line);padding:6px 10px;opacity:0;transition:opacity .25s;z-index:300';
+                            document.getElementById('game')?.appendChild(el);
+                        }
+                        el.textContent = 'SPEED: ' + (text || '').toUpperCase();
+                        el.style.color = color; el.style.opacity = '1';
+                        clearTimeout(this._spBadgeTimer);
+                        this._spBadgeTimer = setTimeout(() => { el.style.opacity = '0'; }, 1600);
+                    };
+                }
+            })();
+
+            // -------- Player ノックバック ポリフィル（滑らか統合）--------
+            (function playerKBPolyfill() {
+                if (!Player.prototype.applyKnockback) {
+                    Player.prototype.applyKnockback = function (srcX, srcY, power = 20, durationMs = 260) {
+                        try {
+                            const dx = this.x - srcX, dy = this.y - srcY;
+                            const d = Math.hypot(dx, dy) || 1;
+                            const ux = dx / d, uy = dy / d; // 方向（中心→外）
+                            // 負のpowerで吸い込み表現
+                            const k = power;
+                            this._kbVX = (this._kbVX || 0) + ux * k;
+                            this._kbVY = (this._kbVY || 0) + uy * k;
+                            const now = performance.now ? performance.now() : Date.now();
+                            this._kbUntil = Math.max(this._kbUntil || 0, now + (durationMs | 0));
+                            this._kbFriction = 0.90; // 減衰
+                        } catch (e) { }
+                    };
+                    // upd ラップ（1回だけ）
+                    if (!Player.prototype._kbPatched) {
+                        const _upd = Player.prototype.upd;
+                        Player.prototype.upd = function (dt) {
+                            // 先に既存更新
+                            _upd.call(this, dt);
+                            // KB 適用
+                            try {
+                                const now = performance.now ? performance.now() : Date.now();
+                                if (this._kbUntil && now < this._kbUntil) {
+                                    this.x = clamp(this.x + (this._kbVX || 0) * dt, 16, this.g.w - 16);
+                                    this.y = clamp(this.y + (this._kbVY || 0) * dt, 16, this.g.h - 16);
+                                    this._kbVX *= (this._kbFriction || 0.9);
+                                    this._kbVY *= (this._kbFriction || 0.9);
+                                } else {
+                                    this._kbVX = this._kbVY = 0;
+                                }
+                            } catch (e) { }
+                        };
+                        Player.prototype._kbPatched = true;
+                    }
+                }
+            })();
+
+            // ========================================================
+            //                     Satan 本体
+            // ========================================================
+            class Satan extends Boss {
+                constructor(g) {
+                    super(g, 'Satan — 深淵の支配者');
+                    this.color1 = C_DARK();
+                    this.color2 = C_DARK2();
+                    this.accent = '#a480ff';
+
+                    this.maxHp = 560;
+                    this.hp = this.maxHp;
+                    this.r = 52;
+
+                    this.phase = 0;
+                    this.enraged = false;
+                    this.blackHoleDone = false;
+                    this.lastMove = null;
+
+                    this.baseInterval = 1.00;
+                    this.tAttack = 0;
+                    this._busy = 0;
+                    this._localT = 0;
+                    this._spawnT = Number.isFinite(g?.t) ? g.t : 0;
+
+                    this.speedState = 'normal';
+                    this.speedTimer = 0;
+                    this.speedTable = { normal: 1.00, fast: 1.45, high: 2.20, light: 3.60 };
+
+                    this.repulseTimer = 0;
+                    this.repulseNext = rand(15, 20);
+
+                    this.campT = 0;
+                    this._timers = [];
+                }
+
+                reset() {
+                    super.reset();
+                    this.phase = 0; this.enraged = false;
+                    this.blackHoleDone = false;
+                    this.lastMove = null;
+                    this.baseInterval = 1.00;
+                    this.tAttack = 0; this._busy = 0;
+                    this._localT = 0; this._spawnT = Number.isFinite(this.g?.t) ? this.g.t : 0;
+                    this.speedState = 'normal'; this.speedTimer = 0;
+                    this.repulseTimer = 0; this.repulseNext = rand(15, 20);
+                    this.campT = 0;
+                    clearTimers(this._timers);
+                }
+                onDefeat() { clearTimers(this._timers); }
+
+                draw(ctx) {
+                    try {
+                        ctx.save();
+                        ctx.globalAlpha = 0.18;
+                        ctx.fillStyle = '#0d001a';
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.r + 44, 0, TAU); ctx.fill();
+                        ctx.restore();
+
+                        const armW = 14, armLen = this.r + 200;
+                        ctx.save();
+                        ctx.shadowColor = this.color2; ctx.shadowBlur = 26;
+                        ctx.fillStyle = this.color2 + 'cc';
+                        ctx.fillRect(this.x - armLen, this.y - armW / 2, armLen * 2, armW);
+                        ctx.fillRect(this.x - armW / 2, this.y - armLen, armW, armLen * 2);
+                        if (!this.g.lowPerf) {
+                            for (let i = 0; i < 6; i++) {
+                                const a = Math.random() * TAU;
+                                const rx = this.x + Math.cos(a) * (this.r + 8);
+                                const ry = this.y + Math.sin(a) * (this.r + 8);
+                                this.g.vfx.spawn(rx, ry, this.accent, 20, 2, Math.cos(a) * .3, Math.sin(a) * .3);
+                            }
+                        }
+                        ctx.restore();
+
+                        const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r);
+                        grd.addColorStop(0, '#000'); grd.addColorStop(.55, '#200020');
+                        grd.addColorStop(.80, this.color1); grd.addColorStop(1, '#000');
+                        ctx.save(); ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, TAU); ctx.fill(); ctx.restore();
+                    } catch (e) { }
+                }
+
+                upd(dt) {
+                    super.upd(dt);
+                    if (!Number.isFinite(this.g?.t)) this._localT += dt;
+
+                    if (this.hp < this.maxHp * 0.70) this.phase = 1;
+                    if (this.hp < this.maxHp * 0.35) {
+                        if (!this.enraged) { this.enraged = true; this._enrageBurst(); }
+                        this.phase = 2;
+                    }
+
+                    if (!this.blackHoleDone && this.hp <= this.maxHp * 0.5) {
+                        this.blackHoleDone = true;
+                        this.blackHoleEX();
+                    }
+
+                    this.speedTimer += dt;
+                    if (this.speedTimer >= 5) { this.speedTimer = 0; this._pickSpeedState(); }
+                    const spMul = this.speedTable[this.speedState] || 1;
+
+                    const t = Number.isFinite(this.g?.t) ? this.g.t : this._localT;
+                    const ampX = 240 + 30 * spMul + (this.enraged ? 30 : 0);
+                    const ampY = 36 + 6 * spMul + (this.enraged ? 6 : 0);
+                    this.x = 480 + Math.sin(t * 0.55 * (0.9 + 0.1 * spMul)) * ampX;
+                    this.y = 140 + Math.cos(t * 0.45 * (0.9 + 0.1 * spMul)) * ampY;
+
+                    if (this.g?.player && this.g.player.y > this.g.h - 180) this.campT += dt; else this.campT = Math.max(0, this.campT - dt * 0.5);
+
+                    this.repulseTimer += dt;
+                    if (this.repulseTimer >= this.repulseNext) {
+                        this.repulseTimer = 0; this.repulseNext = rand(15, 20);
+                        this.repulseNovaEX();
+                    }
+
+                    if ((Number.isFinite(this.g?.t) ? this.g.t : this._localT) - this._spawnT < 0.6) return;
+
+                    if (this._busy > 0) { this._busy -= dt; return; }
+
+                    let intv = this.baseInterval;
+                    if (this.phase === 1) intv *= 0.90;
+                    if (this.phase === 2) intv *= 0.78;
+                    if (this.enraged) intv *= 0.72;
+
+                    this.tAttack += dt;
+                    if (this.tAttack > intv) {
+                        this.tAttack = 0;
+
+                        if (this.campT > 1.2) {
+                            this._usePrefer(['judgmentThunderGate', 'infernoCrossBreak', 'shadowBindSeal']);
+                            this.campT = Math.max(0, this.campT - 0.8);
+                            return;
+                        }
+
+                        if (Math.random() < 0.30) { this.darkNoblesse(); return; }
+
+                        const table = [
+                            'abyssVoidOrb', 'infernoCrossBreak', 'absoluteZeroField', 'voidLance',
+                            'backdraft', 'judgmentThunderGate', 'featherShower', 'mirageDance',
+                            'shadowBindSeal', 'cosmicAnnihilation'
+                        ];
+                        let pick = table[randi(0, table.length)];
+                        for (let i = 0; i < 2 && pick === this.lastMove; i++) pick = table[randi(0, table.length)];
+                        this.lastMove = pick;
+                        try { this[pick] && this[pick](); } catch (e) { /* 防御 */ }
+                    }
+                }
+
+                _pickSpeedState() {
+                    const list = ['normal', 'fast', 'high', 'light'];
+                    let s = list[randi(0, list.length)];
+                    if (s === this.speedState) s = list[randi(0, list.length)];
+                    this.speedState = s;
+                    const col = (s === 'light') ? '#ffffff' : (s === 'high') ? C_DARK2() : (s === 'fast') ? '#ffd34d' : '#e6e9ff';
+                    try { this.g.showSpeedBadge('' + s, col); } catch (e) { }
+                }
+
+                _enrageBurst() {
+                    try {
+                        this.g.callout('覚醒 — 深淵が開く', this.accent);
+                        this.g.tele.ring(this.x, this.y, 130, this.accent, 700);
+                        if (!this.g.lowPerf) this.g.vfx.burst(this.x, this.y, this.accent, 44, 26, 2.2);
+                        const heal = Math.floor(this.maxHp * 0.14);
+                        this.hp = Math.min(this.hp + heal, this.maxHp);
+                        this.g.shake(0.7, 0.3);
+                    } catch (e) { }
+                }
+
+                _usePrefer(list) {
+                    let id = list[randi(0, list.length)];
+                    if (id === this.lastMove) id = list[randi(0, list.length)];
+                    this.lastMove = id; try { this[id] && this[id](); } catch (e) { }
+                }
+
+                // ===== 追加・強化アクション =====
+
+                // 闇ノブレス（2倍ダメ＋強ノックバック）
+                darkNoblesse() {
+                    const C1 = C_DARK(), C2 = C_DARK2();
+                    try { this.g.callout('闇ノブレス - NOVA', C2); } catch (e) { }
+                    const p = this.g?.player;
+                    const base = p ? Math.atan2(p.y - this.y, p.x - this.x) : -Math.PI / 2;
+
+                    const fan = Math.PI * (0.58 + Math.random() * 0.14);
+                    const layers = 3;
+                    for (let L = 0; L < layers; L++) try { this.g.tele.ring(this.x, this.y, 60 + L * 18, C2, 720); } catch (e) { }
+                    for (let i = -1; i <= 1; i++) {
+                        const a = base + i * (fan / 2);
+                        const ox = this.x + Math.cos(a) * 24, oy = this.y + Math.sin(a) * 24;
+                        try { this.g.tele.rect(ox - 16, oy - 2, 32, 420, C1, 720); } catch (e) { }
+                    }
+
+                    safeTimeout(this.g, this, () => {
+                        try { this.g.shake(0.9, 0.28); if (!this.g.lowPerf) this.g.vfx.burst(this.x, this.y, C2, 28, 26, 2.4); } catch (e) { }
+                        const shots = 18, widen = 28, baseSp = 7.6, dmg = 3.0 * 2.0;
+                        for (let L = 0; L < layers; L++) {
+                            const sp = baseSp + L * 0.7;
+                            for (let s = 0; s < shots; s++) {
+                                const a = base - fan / 2 + (fan / (shots - 1)) * s + (Math.random() * 0.015 - 0.007);
+                                const px = this.x + Math.cos(a) * widen, py = this.y + Math.sin(a) * widen;
+                                const pr = new Projectile(this.g, px, py, { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, shape: 'rect', w: 38, h: 18, col: C2, hostile: true, trail: true, damage: dmg, life: 120 + L * 12 });
+                                pr.onHit = () => {
+                                    try {
+                                        if (this.g?.player?.applyKnockback) this.g.player.applyKnockback(px, py, 22 + L * 3, 300);
+                                        if (!this.g.lowPerf) for (let k = 0; k < 3; k++) this.g.vfx.spawn(pr.x, pr.y, C2, 18, 2, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 1.2);
+                                        this.g.shake(0.5, 0.18);
+                                    } catch (e) { }
+                                };
+                                try { this.g.add(pr); } catch (e) { }
+                            }
+                        }
+                    }, 740, this._timers);
+                }
+
+                // 断罪ノックバック波動（EX）
+                repulseNovaEX() {
+                    try { this.g.callout('断罪の波動 - EX', '#e6e9ff'); this.g.tele.ring(this.x, this.y, 230, '#e6e9ff', 700); this.g.tele.ring(this.x, this.y, 268, '#ffffff', 700); } catch (e) { }
+                    safeTimeout(this.g, this, () => {
+                        try { this.g.shake(1.0, 0.35); } catch (e) { }
+                        ['#ffffff', '#e6e9ff'].forEach((core, i) => {
+                            const a = new Area(this.g, this.x, this.y, { r: 10, maxR: 230 + (i ? 80 : 42), col: i ? 'rgba(230,233,255,.26)' : 'rgba(255,255,255,.30)', core, life: 34, hostile: true, damage: 2.0 + i * 0.6 });
+                            a.onHit = () => { try { this.g?.player?.applyKnockback && this.g.player.applyKnockback(this.x, this.y, 24 + i * 6, 320 + i * 40); } catch (e) { } };
+                            try { this.g.add(a); } catch (e) { }
+                        });
+                        for (let k = 0; k < 4; k++) {
+                            const ang = k * (Math.PI / 2);
+                            const p = new Projectile(this.g, this.x, this.y, { vx: Math.cos(ang) * 7.2, vy: Math.sin(ang) * 7.2, shape: 'rect', w: 180, h: 12, col: '#f7fbff', hostile: true, damage: 2.2, life: 80 });
+                            p.onHit = () => { try { this.g?.player?.applyKnockback && this.g.player.applyKnockback(this.x, this.y, 18, 220); } catch (e) { } };
+                            try { this.g.add(p); } catch (e) { }
+                        }
+                    }, 720, this._timers);
+                }
+
+                // ブラックホール（HP50%未満）
+                blackHoleEX() {
+                    const px = this.g?.player?.x ?? this.g?.w / 2 ?? 480, py = this.g?.player?.y ?? this.g?.h * 0.7 ?? 420;
+                    const C = C_DARK2();
+                    try { this.g.callout('ブラックホール生成', C); this.g.tele.ring(px, py, 72, C, 700); } catch (e) { }
+                    safeTimeout(this.g, this, () => {
+                        try { this.g.shake(0.8, 0.3); } catch (e) { }
+                        const pull = 0.72;
+                        const bh = new Area(this.g, px, py, { r: 18, maxR: 180, col: 'rgba(123,76,255,.44)', core: '#ffffff', life: 160, hostile: true, damage: 0.7 });
+                        bh.expand = true; bh._t = 0; bh._sat = [];
+                        const _upd = bh.upd;
+                        bh.upd = (dt) => {
+                            try {
+                                if (this.g?.player) { bh.x = lerp(bh.x, this.g.player.x, 0.035); bh.y = lerp(bh.y, this.g.player.y, 0.035); }
+                                if (this.g?.entitiesPull) this.g.entitiesPull(bh.x, bh.y, pull, true);
+                                const ents = this.g?.entities || [];
+                                for (let i = 0; i < ents.length; i++) {
+                                    const e = ents[i]; if (!e || !e.hostile || !(e instanceof Projectile)) continue;
+                                    const dx = bh.x - e.x, dy = bh.y - e.y; const d = Math.hypot(dx, dy);
+                                    if (d < bh.r * 1.4 + 120) { const ax = dx / Math.max(d, 1), ay = dy / Math.max(d, 1); e.vx = (e.vx || 0) * 0.9 + ax * 2.2; e.vy = (e.vy || 0) * 0.9 + ay * 2.2; }
+                                }
+                                if (bh._sat.length === 0) { for (let i = 0; i < 4; i++) bh._sat.push({ a: i * TAU / 4, r: 40, v: 0.10 + i * 0.012 }); }
+                                bh._t += (dt || 0);
+                                bh._sat.forEach((s) => {
+                                    s.a += s.v;
+                                    if (!this.g?.lowPerf && Math.random() < 0.25) this.g.vfx.spawn(bh.x + Math.cos(s.a) * s.r, bh.y + Math.sin(s.a) * s.r, C, 16, 2, 0, 0);
+                                    if (Math.random() < 0.014) {
+                                        const a = s.a + Math.PI;
+                                        const p = new Projectile(this.g, bh.x + Math.cos(s.a) * s.r, bh.y + Math.sin(s.a) * s.r, { vx: Math.cos(a) * 4.4, vy: Math.sin(a) * 4.4, r: 5, col: C, hostile: true, damage: 1.6, life: 120, trail: true });
+                                        try { this.g.add(p); } catch (e) { }
+                                    }
+                                });
+                            } catch (e) { }
+                            try { _upd.call(bh, dt); } catch (e) { }
+                        };
+                        bh.onHit = () => { try { this.g?.player?.applyKnockback && this.g.player.applyKnockback(bh.x, bh.y, -12, 200); } catch (e) { } };
+                        try { this.g.add(bh); } catch (e) { }
+
+                        safeTimeout(this.g, this, () => {
+                            try { this.g.shake(0.6, 0.22); } catch (e) { }
+                            const core = new Area(this.g, bh.x, bh.y, { r: 10, maxR: 130, col: 'rgba(200,180,255,.28)', core: '#fff', life: 30, hostile: true, damage: 2.4 });
+                            core.onHit = () => { try { this.g?.player?.applyKnockback && this.g.player.applyKnockback(core.x, core.y, 16, 220); } catch (e) { } };
+                            try { this.g.add(core); } catch (e) { }
+                        }, 420, this._timers);
+                    }, 720, this._timers);
+                }
+
+                // ===== 既存強化群（すべて防御ガード＋TTL） =====
+                abyssVoidOrb() {
+                    try { this.g.callout('奈落虚空弾', this.accent); } catch (e) { }
+                    const orb = new Area(this.g, this.x, this.y, { r: 12, maxR: 140, col: 'rgba(30,0,40,.35)', core: '#000', life: 90, hostile: true, damage: 0.6 });
+                    orb.expand = true; orb._ttl = 0;
+                    const _u = orb.upd;
+                    orb.upd = (dt) => {
+                        try {
+                            orb._ttl += (dt || 0);
+                            const pull = orb.life > 30 ? 0.22 : 0.46;
+                            if (this.g?.entitiesPull) this.g.entitiesPull(orb.x, orb.y, pull, true);
+                            if (!this.g?.lowPerf && (orb.life % 6 === 0)) this.g.vfx.spawn(orb.x + rand(-orb.r, orb.r), orb.y + rand(-orb.r, orb.r), this.accent, 16, 2, 0, -0.2);
+                        } catch (e) { }
+                        try { _u.call(orb, dt); } catch (e) { }
+                        try {
+                            if (orb._ttl > 2.0 && orb.life <= 1) {
+                                for (let i = 0; i < 28; i++) {
+                                    const a = i * TAU / 28 + rand(-0.15, 0.15);
+                                    const pr = new Projectile(this.g, orb.x, orb.y, { vx: Math.cos(a) * 4.8, vy: Math.sin(a) * 4.8, r: 6, col: '#6a00b3', hostile: true, damage: 1.4, trail: true, life: 140 });
+                                    this.g.add(pr);
+                                }
+                                if (!this.g?.lowPerf) this.g.vfx.burst(orb.x, orb.y, '#6a00b3', 36, 20, 2.0);
+                            }
+                        } catch (e) { }
+                    };
+                    try { this.g.add(orb); } catch (e) { }
+                }
+
+                infernoCrossBreak() {
+                    try { this.g.callout('業火十字裂き', C_FIRE()); } catch (e) { }
+                    const n = 5, delay = 620;
+                    for (let i = 0; i < n; i++) {
+                        safeTimeout(this.g, this, () => {
+                            const cx = rand(120, this.g.w - 120), cy = rand(120, 260);
+                            try { this.g.tele.rect(cx - 170, cy - 10, 340, 20, C_FIRE2(), 520); this.g.tele.rect(cx - 10, cy - 170, 20, 340, C_FIRE2(), 520); } catch (e) { }
+                            safeTimeout(this.g, this, () => {
+                                const H = new Projectile(this.g, cx, cy, { vx: 0, vy: 0, shape: 'rect', w: 360, h: 18, col: C_FIRE(), hostile: true, damage: 3.0, life: 36 });
+                                const V = new Projectile(this.g, cx, cy, { vx: 0, vy: 0, shape: 'rect', w: 18, h: 360, col: C_FIRE(), hostile: true, damage: 3.0, life: 36 });
+                                H._ttl = 0; const _Hu = H.upd; H.upd = function (dt) { this._ttl += (dt || 0); if (this._ttl > 0.7) this.dead = true; return _Hu.call(this, dt); };
+                                V._ttl = 0; const _Vu = V.upd; V.upd = function (dt) { this._ttl += (dt || 0); if (this._ttl > 0.7) this.dead = true; return _Vu.call(this, dt); };
+                                try { this.g.add(H); this.g.add(V); } catch (e) { }
+                            }, 540, this._timers);
+                        }, i * delay, this._timers);
+                    }
+                }
+
+                absoluteZeroField() {
+                    try { this.g.callout('絶対零域', C_WATER()); this.g.tele.rect(0, 0, this.g.w, this.g.h, '#a9d3ff', 460); } catch (e) { }
+                    const p = this.g?.player; if (!p) return;
+                    try {
+                        if (!p._freezeStacks) p._freezeStacks = 0;
+                        const base = (p._baseSpd || 260);
+                        p._freezeStacks++; p.spd = base * 0.5;
+                        safeTimeout(this.g, this, () => {
+                            if (!this.g?.player) return;
+                            const pl = this.g.player;
+                            pl._freezeStacks = Math.max(0, (pl._freezeStacks || 1) - 1);
+                            if (pl._freezeStacks === 0) pl.spd = base;
+                        }, 3800, this._timers);
+                        if (!this.g.lowPerf) for (let i = 0; i < 36; i++) this.g.vfx.spawn(rand(40, this.g.w - 40), rand(80, this.g.h - 80), '#e9f3ff', 28, 2, rand(-.6, .6), rand(-1.2, -.4));
+                    } catch (e) { }
+                }
+
+                voidLance() {
+                    try { this.g.callout('虚無穿孔', this.accent); } catch (e) { }
+                    const sets = this.phase >= 1 ? 3 : 2;
+                    for (let s = 0; s < sets; s++) {
+                        safeTimeout(this.g, this, () => {
+                            const m = 5 + (this.phase >= 2 ? 2 : 0);
+                            const base = (this.g?.player) ? Math.atan2(this.g.player.y - this.y, this.g.player.x - this.x) : 0;
+                            for (let i = 0; i < m; i++) {
+                                const a = base + (i - (m - 1) / 2) * 0.18;
+                                const p = new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * 9.2, vy: Math.sin(a) * 9.2, r: 6, col: '#150015', hostile: true, damage: 2.2, life: 120 });
+                                p._leave = 0; const _u = p.upd; p.upd = (dt) => { try { p._leave++; if (p._leave % 6 === 0) { const scar = new Projectile(this.g, p.x, p.y, { vx: 0, vy: 0, shape: 'rect', w: 16, h: 4, col: '#3b003b', hostile: true, damage: 0.6, life: 20 }); scar._noShadow = true; scar._ttl = 0; const _su = scar.upd; scar.upd = function (dt2) { this._ttl += (dt2 || 0); if (this._ttl > 0.35) this.dead = true; return _su.call(this, dt2); }; this.g.add(scar); } } catch (e) { } try { return _u.call(p, dt); } catch (e) { return; } };
+                                try { this.g.add(p); } catch (e) { }
+                            }
+                        }, s * 120, this._timers);
+                    }
+                }
+
+                backdraft() {
+                    try { this.g.callout('煉獄逆流波', C_FIRE()); } catch (e) { }
+                    const dir = Math.random() < 0.5 ? 1 : -1;
+                    const y = rand(160, 300);
+                    try { this.g.tele.rect(dir > 0 ? 0 : this.g.w - 30, y - 60, 30, 120, C_FIRE2(), 700); } catch (e) { }
+                    safeTimeout(this.g, this, () => {
+                        const wave = new Projectile(this.g, dir > 0 ? -120 : this.g.w + 120, y, { vx: dir > 0 ? 6.2 : -6.2, vy: 0, shape: 'rect', w: 220, h: 120, col: C_FIRE(), hostile: true, damage: 3.2, life: 200 });
+                        wave._tick = 0; const _wu = wave.upd; wave.upd = (dt) => { try { wave._tick++; if (wave._tick % 16 === 0) { const fx = new Projectile(this.g, wave.x + rand(-80, 80), wave.y + rand(-40, 40), { vx: (this.g?.player ? (this.g.player.x - wave.x) / 60 : 0), vy: (this.g?.player ? (this.g.player.y - wave.y) / 60 : 0), r: 7, col: C_FIRE2(), hostile: true, damage: 1.4, life: 120, trail: true }); this.g.add(fx); } } catch (e) { } try { return _wu.call(wave, dt); } catch (e) { return; } };
+                        try { this.g.add(wave); } catch (e) { }
+                    }, 720, this._timers);
+                }
+
+                judgmentThunderGate() {
+                    try { this.g.callout('雷獄断罪陣', C_TH()); } catch (e) { }
+                    let x = rand(80, this.g.w - 80);
+                    const n = 6 + (this.phase >= 1 ? 2 : 0);
+                    for (let i = 0; i < n; i++) {
+                        safeTimeout(this.g, this, () => {
+                            try { this.g.tele.rect(x - 14, 0, 28, this.g.h, C_TH2(), 400); } catch (e) { }
+                            safeTimeout(this.g, this, () => {
+                                try { this.g.add(new Laser(this.g, x, 0, 28, this.g.h, C_TH(), 26, true)); if (!this.g.lowPerf) this.g.vfx.burst(x, 140, '#fff889', 16, 20, 2); } catch (e) { }
+                            }, 420, this._timers);
+                            x = rand(80, this.g.w - 80);
+                        }, i * 160, this._timers);
+                    }
+                }
+
+                featherShower() {
+                    try { this.g.callout('黒翼刃雨', this.accent); } catch (e) { }
+                    const rows = 16 + (this.phase >= 2 ? 6 : 0);
+                    for (let i = 0; i < rows; i++) {
+                        safeTimeout(this.g, this, () => {
+                            const xx = rand(80, this.g.w - 80);
+                            const p = new Projectile(this.g, xx, -30, { vx: rand(-0.8, 0.8), vy: rand(5.8, 9.2), r: 6, col: this.accent, hostile: true, damage: 1.8, life: 200, trail: true });
+                            const _u = p.upd; p.upd = (dt) => { try { p.vx += Math.sin((Number.isFinite(this.g?.t) ? this.g.t : this._localT) * 1.3 + i) * 0.04; } catch (e) { } try { return _u.call(p, dt); } catch (e) { return; } };
+                            try { this.g.add(p); } catch (e) { }
+                        }, i * 60, this._timers);
+                    }
+                }
+
+                mirageDance() {
+                    try { this.g.callout('終焉虚影舞', this.accent); } catch (e) { }
+                    const spots = [[100, 100], [this.g?.w - 100 || 860, 100], [120, 240], [this.g?.w - 120 || 840, 240]];
+                    spots.forEach(([sx, sy], idx) => {
+                        try { this.g.tele.ring(sx, sy, 36, this.accent, 460); } catch (e) { }
+                        safeTimeout(this.g, this, () => {
+                            const n = 8;
+                            for (let i = 0; i < n; i++) {
+                                const a = (this.g?.player) ? Math.atan2(this.g.player.y - sy, this.g.player.x - sx) + (i - (n - 1) / 2) * 0.12 : (i - (n - 1) / 2) * 0.12;
+                                try { this.g.add(new Projectile(this.g, sx, sy, { vx: Math.cos(a) * 7.0, vy: Math.sin(a) * 7.0, r: 5, col: '#ffffff', hostile: true, damage: 1.6, life: 120, trail: true })); } catch (e) { }
+                            }
+                            const rect = new Projectile(this.g, sx, sy, { vx: 0, vy: 0, shape: 'rect', w: 90, h: 12, col: this.accent, hostile: true, damage: 2.0, life: 20 });
+                            rect._ttl = 0; const _ru = rect.upd; rect.upd = function (dt) { try { this._ttl += (dt || 0); if (this._ttl > 0.45) this.dead = true; } catch (e) { } try { return _ru.call(this, dt); } catch (e) { return; } };
+                            try { this.g.add(rect); } catch (e) { }
+                        }, 480 + idx * 80, this._timers);
+                    });
+                }
+
+                shadowBindSeal() {
+                    const g = this.g, boss = this, ac = this.accent || '#a480ff';
+                    try { g.callout('影縛刻印', ac); } catch (e) { }
+                    const stacks = this.phase >= 2 ? 3 : 2;
+                    const MAX_SPAWNS = 48; let spawns = 0;
+                    for (let i = 0; i < stacks; i++) {
+                        const px0 = g?.player?.x ?? 480; const py0 = g?.player?.y ?? 260;
+                        try { g.tele.ring(px0, py0, 28, '#c0a0ff', 600); } catch (e) { }
+                        safeTimeout(g, boss, () => {
+                            if (spawns >= MAX_SPAWNS) return;
+                            const bind = new Projectile(g, px0, py0, { vx: 0, vy: 0, shape: 'rect', w: 36, h: 14, col: '#c0a0ff', hostile: true, damage: 1.6, life: 20 });
+                            bind._ttl = 0; const _bu = bind.upd; bind.upd = function (dt) { try { this._ttl += (dt || 0); if (this._ttl > 1.0) this.dead = true; } catch (e) { } try { return _bu.call(this, dt); } catch (e) { return; } };
+                            try { g.add(bind); } catch (e) { } spawns++;
+
+                            const stabs = 6;
+                            for (let k = 0; k < stabs; k++) {
+                                if (spawns >= MAX_SPAWNS) break;
+                                safeTimeout(g, boss, () => {
+                                    if (spawns >= MAX_SPAWNS) return;
+                                    const sx = px0 + (Math.random() * 52 - 26), sy = -20;
+                                    const stab = new Projectile(g, sx, sy, { vx: 0, vy: 9.2, shape: 'rect', w: 10, h: 50, col: '#eaffff', hostile: true, damage: 1.8, life: 100 });
+                                    const _su = stab.upd;
+                                    stab.upd = function (dt) {
+                                        try { _su.call(this, dt); } catch (e) { }
+                                        try {
+                                            if (this.y > g.h - 18) {
+                                                this.dead = true;
+                                                g.add(new Area(g, this.x, g.h - 40, { r: 6, maxR: 48, col: 'rgba(224,255,255,.22)', core: '#fff', life: 18, hostile: true, damage: 0.8 }));
+                                            }
+                                        } catch (e) { }
+                                    };
+                                    stab._ttl = 0; const _su2 = stab.upd; stab.upd = function (dt) { try { this._ttl += (dt || 0); if (this._ttl > 1.2) this.dead = true; } catch (e) { } try { return _su2.call(this, dt); } catch (e) { return; } };
+                                    try { g.add(stab); } catch (e) { } spawns++;
+                                }, k * 90, this._timers);
+                            }
+                        }, 620 + i * 220, this._timers);
+                    }
+                }
+
+                cosmicAnnihilation() {
+                    try { this.g.callout('星滅轟破', '#fff'); } catch (e) { }
+                    const N = 48 + (this.phase >= 2 ? 18 : 0);
+                    for (let i = 0; i < N; i++) {
+                        safeTimeout(this.g, this, () => {
+                            const xx = rand(60, this.g.w - 60);
+                            const p = new Projectile(this.g, xx, -30, { vx: 0, vy: rand(6.2, 8.0), r: 5, col: '#e6e9ff', hostile: true, damage: 1.2, life: 180 });
+                            const _u = p.upd; p.upd = (dt) => { try { _u.call(p, dt); } catch (e) { } try { if (p.y > this.g.h - 24) { p.dead = true; this.g.add(new Area(this.g, p.x, this.g.h - 40, { r: 8, maxR: 90, col: 'rgba(230,233,255,.25)', core: '#fff', life: 28, hostile: true, damage: 1.8 })); } } catch (e) { } };
+                            try { this.g.add(p); } catch (e) { }
+                        }, i * 40, this._timers);
+                    }
+                }
+            }
+
+            window.Satan = Satan;
+
+            // 任意：ボス選択UIへ自動追加（存在時のみ）
+            function attachToBossSelect() {
+                const sel = document.getElementById('bossSelect');
+                const btn = document.getElementById('btnPractice');
+                if (!sel || !btn) return false;
+
+                let has = false;
+                for (let i = 0; i < sel.options.length; i++) {
+                    const o = sel.options[i];
+                    if ((o.dataset && o.dataset.boss === 'Satan') || /Satan/.test(o.textContent || '')) { has = true; break; }
+                }
+                if (!has) {
+                    const opt = document.createElement('option');
+                    opt.value = '__Satan__'; opt.dataset.boss = 'Satan';
+                    opt.textContent = 'Satan（深淵の支配者／裏）';
+                    sel.appendChild(opt);
+                }
+
+                if (!btn._satanSelectPatch) {
+                    const handler = (ev) => {
+                        try {
+                            const opt = sel.options[sel.selectedIndex];
+                            const clsName = opt?.dataset?.boss;
+                            const BossClass = clsName && window[clsName];
+                            if (BossClass) {
+                                ev.stopImmediatePropagation(); ev.preventDefault();
+                                try { const dif = localStorage.getItem('elem_ultra_dif') || 'N'; game.setDifficulty && game.setDifficulty(dif); } catch (e) { }
+                                const seedEl = document.getElementById('seedInput');
+                                if (seedEl) { const v = seedEl.value.trim(); try { v ? RNG.enable(v) : RNG.disable(); } catch (e) { } }
+                                const keepUpg = !!document.getElementById('keepUpg')?.checked;
+                                const infHP = !!document.getElementById('infHP')?.checked;
+                                if (game.startSingle) game.startSingle(BossClass, { keepUpgrades: keepUpg, infHP });
+                            }
+                        } catch (e) { }
+                    };
+                    btn.addEventListener('click', handler, { capture: true });
+                    btn.addEventListener('click', handler);
+                    btn._satanSelectPatch = true;
+                }
+                return true;
+            }
+            if (!attachToBossSelect()) {
+                window.addEventListener('load', () => setTimeout(attachToBossSelect, 0));
+                setTimeout(attachToBossSelect, 600);
+                setTimeout(attachToBossSelect, 1500);
+            }
+        })();
+    </script>
+
+
+
+    <script>
+        /** 裏ボスルートに Satan を組み込む（貼るだけ・既存を壊さない） */
+        (function addSatanToSecretRoute() {
+            function ready(fn) {
+                if (document.readyState === 'complete' || document.readyState === 'interactive') fn();
+                else window.addEventListener('DOMContentLoaded', fn, { once: true });
+            }
+            ready(function tryAttach() {
+                // Satan が読み込まれるまで/ game が初期化されるまで待機
+                if (!window.Satan || !window.game) return setTimeout(tryAttach, 50);
+
+                // secret 配列が無ければ空で用意（既存実装に合わせておく）
+                if (!Array.isArray(game.secret)) game.secret = [];
+
+                // すでに入っていないなら追加（重複防止）
+                const has = game.secret.some(C => C === window.Satan || (C && C.name === 'Satan'));
+                if (!has) {
+                    // Fallen Hero の直後に差し込む（見つからなければ末尾）
+                    const idxFH = game.secret.findIndex(C => C && (C.name === 'FallenHero' || C.name === 'Fallen_Hero'));
+                    if (idxFH >= 0) game.secret.splice(idxFH + 1, 0, window.Satan);
+                    else game.secret.push(window.Satan);
+                }
+
+                // Boss Select / Practice のセレクトにも念のため追加（既にあればスキップ）
+                const sel = document.getElementById('bossSelect');
+                if (sel && ![...sel.options].some(o => (o.dataset && o.dataset.boss === 'Satan'))) {
+                    const opt = document.createElement('option');
+                    opt.value = '__Satan__';
+                    opt.dataset.boss = 'Satan';
+                    opt.textContent = 'Satan（深淵の支配者／裏）';
+                    sel.appendChild(opt);
+                }
+
+                // デバッグ表示（必要なければ消してOK）
+                // console.log('[Secret Route] Satan added:', game.secret.map(c => c && c.name));
+            });
+        })();
+
+        (function addBahamutToSecretRoute() {
+            function ready(fn) {
+                if (document.readyState === 'complete' || document.readyState === 'interactive') fn();
+                else window.addEventListener('DOMContentLoaded', fn, { once: true });
+            }
+            ready(function tryAttach() {
+                if (!window.Bahamut || !window.game) return setTimeout(tryAttach, 50);
+                let unlocked = false;
+                try { unlocked = localStorage.getItem('elem_ultra_bahamut') === '1'; } catch (e) { }
+                if (!unlocked) return;
+                if (!Array.isArray(game.secret)) game.secret = [];
+                const has = game.secret.some(C => C === window.Bahamut || (C && C.name === 'Bahamut'));
+                if (!has) {
+                    const idxFH = game.secret.findIndex(C => C && (C.name === 'FallenHero' || C.name === 'Fallen_Hero'));
+                    if (idxFH >= 0) game.secret.splice(idxFH + 1, 0, window.Bahamut);
+                    else game.secret.push(window.Bahamut);
+                }
+                const sel = document.getElementById('bossSelect');
+                if (sel && ![...sel.options].some(o => (o.dataset && o.dataset.boss === 'Bahamut'))) {
+                    const opt = document.createElement('option');
+                    opt.value = '__Bahamut__';
+                    opt.dataset.boss = 'Bahamut';
+                    opt.textContent = 'Bahamut（蒼炎と終焉の龍帝／裏）';
+                    sel.appendChild(opt);
+                }
+            });
+        })();
+    </script>
+
+</body>
+
+</html>
