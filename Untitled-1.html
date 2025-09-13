@@ -2107,35 +2107,116 @@
                 super.take(d);
             }
         }
+        // ------------------------------
+        // 裏ボス #3：Bahamut（蒼炎と終焉の龍帝）
+        // ------------------------------
+        class Bahamut extends Boss {
+            constructor(g) {
+                super(g, 'Bahamut — 蒼炎と終焉の龍帝');
+                this.maxHp = 800; this.hp = this.maxHp;
+                this.color1 = CSS('--c-fire'); this.color2 = CSS('--c-th');
+                this.moveMode = 0; this.moveT = 0; this.moveDur = 3;
+            }
+            reset() { super.reset(); this.moveMode = 0; this.moveT = 0; }
+            upd(dt) {
+                super.upd(dt);
+                this.moveT += dt;
+                if (this.moveT > this.moveDur) {
+                    this.moveT = 0; this.moveMode = randi(0, 4);
+                }
+                switch (this.moveMode) {
+                    case 0: // 旋回飛行（八の字）
+                        this.x = 480 + Math.sin(this.g.t * 0.6) * 260;
+                        this.y = 160 + Math.sin(this.g.t * 1.2) * 60;
+                        break;
+                    case 1: // ジグザグ
+                        this.x = 480 + Math.sin(this.g.t * 1.3) * 300;
+                        this.y = 140 + Math.cos(this.g.t * 0.8) * 40;
+                        break;
+                    case 2: // 急降下→上昇
+                        this.x += ((this.g.player?.x || 480) - this.x) * 0.06;
+                        this.y += 520 * dt;
+                        if (this.y > this.g.h - 120) this.moveMode = 3;
+                        break;
+                    case 3: // 上昇復帰
+                        this.y -= 520 * dt;
+                        if (this.y <= 140) this.moveMode = 0;
+                        break;
+                    case 4: // 滞空チャージ
+                        this.x = 480 + Math.sin(this.g.t * 0.4) * 80;
+                        this.y = 160;
+                        break;
+                }
+                if (this.tAttack > 1.25) {
+                    this.tAttack = 0;
+                    const table = [this.flareBurst, this.lightningDive, this.megaFlare];
+                    table[randi(0, table.length)].call(this);
+                }
+                if (this.hp < this.maxHp * 0.6) this.phase = 1;
+                if (this.hp < this.maxHp * 0.3) this.phase = 2;
+            }
+
+            // フレアバースト：扇状炎弾
+            flareBurst() {
+                this.g.callout('フレアバースト', CSS('--c-fire'));
+                const n = 36;
+                for (let i = 0; i < n; i++) {
+                    const a = -TAU / 4 + i * TAU / (n * 1.5);
+                    const sp = rand(3.8, 5.0);
+                    this.g.add(new Projectile(this.g, this.x, this.y, { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 7, col: '#ff7a3c', hostile: true, damage: 2.0, trail: true }));
+                }
+            }
+
+            // ライトニングダイブ：縦雷柱
+            lightningDive() {
+                this.g.callout('ライトニングダイブ', CSS('--c-th'));
+                const px = this.g.player ? this.g.player.x : this.x;
+                this.g.tele.rect(px - 20, -20, 40, this.g.h + 40, '#bdf', 600);
+                setTimeout(() => {
+                    for (let i = 0; i < 5; i++) {
+                        const y = -40 - i * 80;
+                        this.g.add(new Projectile(this.g, px, y, { vx: 0, vy: 11, r: 18, col: '#bdf', hostile: true, damage: 3.2, life: 120 }));
+                    }
+                }, 620);
+            }
+
+            // メガフレア：全方位レーザー
+            megaFlare() {
+                this.g.callout('メガフレア', CSS('--c-th'));
+                const dirs = 8;
+                for (let i = 0; i < dirs; i++) {
+                    const a = i * TAU / dirs;
+                    const x = this.x + Math.cos(a) * 80;
+                    const y = this.y + Math.sin(a) * 80;
+                    this.g.tele.ring(x, y, 30, '#ffe56b', 700);
+                    setTimeout(() => {
+                        this.g.add(new Projectile(this.g, x, y, { vx: Math.cos(a) * 8, vy: Math.sin(a) * 8, r: 14, col: '#ffe56b', hostile: true, damage: 4.0, life: 180 }));
+                    }, 720);
+                }
+            }
+        }
+
 
         // -------- シークレットキャンペーン構築＆ボタン配線 --------
         (function secretCampaign() {
-            if (window.game) {
+            function attach() {
                 game.secret.push(Pierrot, FallenHero);
+                try {
+                    if (localStorage.getItem('elem_ultra_bahamut') === '1') game.secr
+                    et.push(Bahamut);
+                } catch (e) { }
                 const btn = document.getElementById('btnSecret');
                 if (btn) {
                     btn.addEventListener('click', () => game.startSecret());
-                    // Cosmos 撃破済みなら表示（Part2で保存済）
                     try {
                         const sec = localStorage.getItem('elem_ultra_secret') === '1';
-                        btn.style.display = sec ? 'inline-block' : 'none';
+                        const b = localStorage.getItem('elem_ultra_bahamut') === '1';
+                        btn.style.display = (sec || b) ? 'inline-block' : 'none';
                     } catch (e) { }
                 }
-            } else {
-                window.addEventListener('load', () => {
-                    if (window.game) {
-                        game.secret.push(Pierrot, FallenHero);
-                        const btn = document.getElementById('btnSecret');
-                        if (btn) {
-                            btn.addEventListener('click', () => game.startSecret());
-                            try {
-                                const sec = localStorage.getItem('elem_ultra_secret') === '1';
-                                btn.style.display = sec ? 'inline-block' : 'none';
-                            } catch (e) { }
-                        }
-                    }
-                });
             }
+            if (window.game) attach();
+            else window.addEventListener('load', () => { if (window.game) attach(); });
         })();
 
         // -------- 追加：被弾ヒットストップ風＆ヒットスパーク強化 --------
@@ -2556,6 +2637,7 @@
                     ['Cosmos', 'Cosmos（原初）'],
                     ['Pierrot', 'Pierrot（道化／裏）'],
                     ['FallenHero', 'Fallen Hero（朽ちた勇者／裏）'],
+                    ['Bahamut', 'Bahamut（蒼炎と終焉の龍帝／裏）'],
                     // 追加ボスがあればここに ['ClassName','表示名'] を追記
                 ];
                 known.forEach(([n, label]) => {
